@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="de" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stadtrat & Parlaments-Rechner | Mehrere Gruppen & Ausschüsse</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .seat-arc {
+            transition: all 0.25s ease;
+        }
+        .seat-arc:hover {
+            filter: brightness(1.15) drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col text-slate-800">
+
+    <!-- Header / Navbar -->
+    <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-indigo-600 rounded-lg shadow-sm">
+                    <i data-lucide="vote" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">Stadtsitz & Gruppen-Rechner</h1>
+                    <p class="text-xs text-slate-400">Mehrere Bündnisse, Mehrheiten & Detaillierte Ausschuss-Zugriffsreihenfolge</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <button onclick="loadPreset('stadtrat')" class="text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Preset:</span> Stadtrat
+                </button>
+                <button onclick="loadPreset('kreistag')" class="text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                    <i data-lucide="building-2" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Preset:</span> Kreistag
+                </button>
+                <button onclick="toggleGithubModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg font-medium text-xs sm:text-sm transition flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="github" class="w-4 h-4"></i>
+                    <span class="hidden md:inline">Auf GitHub veröffentlichen</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Layout -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- LEFT COLUMN: Parties & Group Creation (5 Cols) -->
+        <section class="lg:col-span-5 space-y-6">
+
+            <!-- Card 1: Parteien & Sitzanzahl -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="users" class="w-5 h-5 text-indigo-600"></i>
+                        <h2 class="font-semibold text-slate-900">1. Parteien & Einzelräte</h2>
+                    </div>
+                    <span id="total-seats-badge" class="bg-indigo-50 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-full border border-indigo-100">
+                        Gesamt: 0 Sitze
+                    </span>
+                </div>
+
+                <!-- Add New Party Form -->
+                <form id="add-party-form" onsubmit="handleAddParty(event)" class="grid grid-cols-12 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                    <div class="col-span-5">
+                        <input type="text" id="party-name" placeholder="Partei / Liste" required class="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div class="col-span-3">
+                        <input type="number" id="party-seats" placeholder="Sitze" min="1" required class="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div class="col-span-2 flex items-center justify-center">
+                        <input type="color" id="party-color" value="#3b82f6" class="w-8 h-8 rounded border border-slate-300 cursor-pointer p-0.5">
+                    </div>
+                    <div class="col-span-2">
+                        <button type="submit" class="w-full h-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center justify-center transition" title="Partei hinzufügen">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- List of Parties -->
+                <div id="parties-list" class="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                    <!-- Dynamic Party Rows -->
+                </div>
+
+                <div class="pt-2 flex justify-between items-center text-xs text-slate-500 border-t border-slate-100">
+                    <button onclick="resetAll()" class="text-rose-600 hover:text-rose-800 flex items-center gap-1">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Alles zurücksetzen
+                    </button>
+                    <span id="majority-threshold-text" class="font-medium text-slate-700">Mehrheit ab: 0 Sitzen</span>
+                </div>
+            </div>
+
+            <!-- Card 2: Neue Gruppe / Bündnis erstellen -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+                <div class="flex items-center space-x-2 pb-3 border-b border-slate-100">
+                    <i data-lucide="layers" class="w-5 h-5 text-indigo-600"></i>
+                    <h2 class="font-semibold text-slate-900">2. Gruppe / Bündnis erstellen</h2>
+                </div>
+
+                <p class="text-xs text-slate-600">
+                    Erstelle beliebig viele Gruppen (z.B. Koalition, Oppositionsblock, Zweckbündnis) und ordne ihnen Parteien zu.
+                </p>
+
+                <form onsubmit="handleAddGroup(event)" class="grid grid-cols-12 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                    <div class="col-span-7">
+                        <input type="text" id="group-name" placeholder="z.B. Zähl-Gemeinschaft A" required class="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div class="col-span-3 flex items-center justify-center">
+                        <input type="color" id="group-color" value="#6366f1" class="w-8 h-8 rounded border border-slate-300 cursor-pointer p-0.5">
+                    </div>
+                    <div class="col-span-2">
+                        <button type="submit" class="w-full h-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center justify-center transition" title="Gruppe erstellen">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Card 3: Ausschuss-Regeln -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+                <div class="flex items-center space-x-2 pb-3 border-b border-slate-100">
+                    <i data-lucide="calculator" class="w-5 h-5 text-indigo-600"></i>
+                    <h2 class="font-semibold text-slate-900">3. globales Rechenverfahren</h2>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Verfahren für alle Ausschüsse</label>
+                    <select id="calc-method" onchange="renderAll()" class="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
+                        <option value="saint-lague">Saint-Laguë / Schepers (Divisor mit Standardrundung)</option>
+                        <option value="dhondt">D'Hondt (Höchstzahlverfahren)</option>
+                        <option value="hare">Hare-Niemeyer (Quotenverfahren)</option>
+                    </select>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- RIGHT COLUMN: Visualisation, Groups Overview & Committee Results (7 Cols) -->
+        <section class="lg:col-span-7 space-y-6">
+
+            <!-- Card: Dynamic Parliament Arc Diagram -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-600"></i>
+                        <h2 class="font-semibold text-slate-900">Sitzverteilung im Rat</h2>
+                    </div>
+                    <span class="text-xs text-slate-500">Halbkreis-Sitzplan</span>
+                </div>
+
+                <!-- SVG Hemisphere Diagram -->
+                <div class="relative flex flex-col items-center justify-center pt-2">
+                    <svg id="parliament-svg" viewBox="0 0 400 210" class="w-full max-w-md h-auto overflow-visible">
+                        <!-- Dynamic SVG Paths -->
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Card: Erstellte Gruppen & Bündnisse -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="users-round" class="w-5 h-5 text-indigo-600"></i>
+                        <h2 class="font-semibold text-slate-900">Aktuelle Gruppen & Bündnisse</h2>
+                    </div>
+                    <span id="group-count-badge" class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-medium">0 Gruppen</span>
+                </div>
+
+                <div id="groups-container" class="space-y-4">
+                    <!-- Dynamic Group Cards -->
+                </div>
+            </div>
+
+            <!-- Card: Individuelle Ausschüsse & Zugriffsreihenfolge -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="layout-grid" class="w-5 h-5 text-indigo-600"></i>
+                        <h2 class="font-semibold text-slate-900">Ausschüsse & Zugriffsreihenfolge</h2>
+                    </div>
+                    <span id="calc-method-badge" class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md font-semibold border border-indigo-100">
+                        Saint-Laguë / Schepers
+                    </span>
+                </div>
+
+                <!-- Neuer Ausschuss Formular -->
+                <form onsubmit="handleAddCommittee(event)" class="grid grid-cols-12 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                    <div class="col-span-6 sm:col-span-7">
+                        <input type="text" id="committee-name" placeholder="z.B. Verwaltungsausschuss" required class="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div class="col-span-4 sm:col-span-3">
+                        <input type="number" id="committee-seats-input" placeholder="Sitze (z.B. 10)" min="1" max="100" required class="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <button type="submit" class="w-full h-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-xs flex items-center justify-center transition gap-1" title="Ausschuss anlegen">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span class="hidden sm:inline">Anlegen</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Liste aller Ausschüsse mit ihren Ergebnissen & Zugriffslisten -->
+                <div id="committees-list-container" class="space-y-6 pt-2">
+                    <!-- Dynamic Committees Cards -->
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Modal: GitHub Deployment Guide -->
+    <div id="github-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xl w-full p-6 space-y-5 shadow-2xl relative">
+            <button onclick="toggleGithubModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div class="flex items-center space-x-3">
+                <div class="p-3 bg-slate-900 text-white rounded-xl">
+                    <i data-lucide="github" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 text-lg">Auf GitHub Pages veröffentlichen</h3>
+                    <p class="text-xs text-slate-500">So machst du diesen Rechner kostenlos online erreichbar</p>
+                </div>
+            </div>
+
+            <ol class="space-y-3 text-xs text-slate-600 list-decimal list-inside bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <li class="leading-relaxed">
+                    <strong>Code speichern:</strong> Speichere den gesamten HTML-Code als <code>index.html</code> auf deinem Computer.
+                </li>
+                <li class="leading-relaxed">
+                    <strong>GitHub Repository:</strong> Erstelle ein neues Repository auf <a href="https://github.com" target="_blank" class="text-indigo-600 underline font-medium">GitHub.com</a>.
+                </li>
+                <li class="leading-relaxed">
+                    <strong>Datei hochladen:</strong> Lade <code>index.html</code> über <em>"Upload files"</em> in den Root-Ordner hoch.
+                </li>
+                <li class="leading-relaxed">
+                    <strong>Pages aktivieren:</strong> Gehe im Repository zu <strong>Settings</strong> &rarr; <strong>Pages</strong> &rarr; Wähle bei Source <code>Deploy from a branch</code> und Wähle Branch <code>main</code> / <code>root</code>.
+                </li>
+                <li class="leading-relaxed">
+                    <strong>Fertig!</strong> Unter <code>https://dein-username.github.io/repository-name</code> ist die Seite nach ca. 1 Minute online.
+                </li>
+            </ol>
+
+            <div class="flex justify-end pt-2">
+                <button onclick="toggleGithubModal()" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-slate-800 transition">
+                    Verstanden!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // --- State Management ---
+        let parties = [
+            { id: 'p1', name: 'CDU', seats: 16, color: '#1e293b' },
+            { id: 'p2', name: 'SPD', seats: 12, color: '#ef4444' },
+            { id: 'p3', name: 'GRÜNE', seats: 9, color: '#10b981' },
+            { id: 'p4', name: 'FDP', seats: 3, color: '#eab308' },
+            { id: 'p5', name: 'AfD', seats: 6, color: '#0284c7' },
+            { id: 'p6', name: 'Freie Wähler / WG', seats: 4, color: '#f97316' }
+        ];
+
+        let groups = [
+            { id: 'g1', name: 'Ratskoalition', color: '#6366f1', partyIds: ['p1', 'p3', 'p4'] },
+            { id: 'g2', name: 'Oppositionsbündnis', color: '#ef4444', partyIds: ['p2', 'p6'] }
+        ];
+
+        let committees = [
+            { id: 'c1', name: 'Verwaltungsausschuss', seats: 10 },
+            { id: 'c2', name: 'Finanz- & Wirtschaftsausschuss', seats: 8 },
+            { id: 'c3', name: 'Aufsichtsrat Stadtwerke', seats: 6 }
+        ];
+
+        const presets = {
+            stadtrat: {
+                parties: [
+                    { id: 'p1', name: 'CDU', seats: 16, color: '#1e293b' },
+                    { id: 'p2', name: 'SPD', seats: 12, color: '#ef4444' },
+                    { id: 'p3', name: 'GRÜNE', seats: 9, color: '#10b981' },
+                    { id: 'p4', name: 'FDP', seats: 3, color: '#eab308' },
+                    { id: 'p5', name: 'AfD', seats: 6, color: '#0284c7' },
+                    { id: 'p6', name: 'Freie Wähler / WG', seats: 4, color: '#f97316' }
+                ],
+                groups: [
+                    { id: 'g1', name: 'Zählgemeinschaft A', color: '#6366f1', partyIds: ['p1', 'p3', 'p4'] }
+                ],
+                committees: [
+                    { id: 'c1', name: 'Verwaltungsausschuss', seats: 10 },
+                    { id: 'c2', name: 'Finanz- & Bauausschuss', seats: 8 },
+                    { id: 'c3', name: 'Schul- & Kulturausschuss', seats: 12 }
+                ]
+            },
+            kreistag: {
+                parties: [
+                    { id: 'p1', name: 'CDU', seats: 24, color: '#1e293b' },
+                    { id: 'p2', name: 'SPD', seats: 18, color: '#ef4444' },
+                    { id: 'p3', name: 'GRÜNE', seats: 12, color: '#10b981' },
+                    { id: 'p4', name: 'AfD', seats: 10, color: '#0284c7' },
+                    { id: 'p5', name: 'FDP', seats: 4, color: '#eab308' },
+                    { id: 'p6', name: 'Die Linke', seats: 3, color: '#ec4899' },
+                    { id: 'p7', name: 'UWGs', seats: 5, color: '#8b5cf6' }
+                ],
+                groups: [
+                    { id: 'g1', name: 'Große Koalition', color: '#1e293b', partyIds: ['p1', 'p2'] },
+                    { id: 'g2', name: 'Klima & Bürger Bündnis', color: '#10b981', partyIds: ['p3', 'p5', 'p7'] }
+                ],
+                committees: [
+                    { id: 'c1', name: 'Kreisausschuss', seats: 12 },
+                    { id: 'c2', name: 'Aufsichtsrat Kreissparkasse', seats: 10 }
+                ]
+            }
+        };
+
+        // --- Init ---
+        window.onload = function() {
+            lucide.createIcons();
+            renderAll();
+        };
+
+        // --- Action Handlers ---
+        function handleAddParty(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('party-name');
+            const seatsInput = document.getElementById('party-seats');
+            const colorInput = document.getElementById('party-color');
+
+            const newParty = {
+                id: 'p_' + Date.now().toString(),
+                name: nameInput.value.trim(),
+                seats: parseInt(seatsInput.value, 10),
+                color: colorInput.value
+            };
+
+            parties.push(newParty);
+            nameInput.value = '';
+            seatsInput.value = '';
+            renderAll();
+        }
+
+        function removeParty(id) {
+            parties = parties.filter(p => p.id !== id);
+            groups.forEach(g => {
+                g.partyIds = g.partyIds.filter(pId => pId !== id);
+            });
+            renderAll();
+        }
+
+        function updatePartySeats(id, seats) {
+            const party = parties.find(p => p.id === id);
+            if (party) {
+                party.seats = Math.max(1, parseInt(seats, 10) || 0);
+                renderAll();
+            }
+        }
+
+        function updatePartyColor(id, color) {
+            const party = parties.find(p => p.id === id);
+            if (party) {
+                party.color = color;
+                renderAll();
+            }
+        }
+
+        function handleAddGroup(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('group-name');
+            const colorInput = document.getElementById('group-color');
+
+            const newGroup = {
+                id: 'g_' + Date.now().toString(),
+                name: nameInput.value.trim(),
+                color: colorInput.value,
+                partyIds: []
+            };
+
+            groups.push(newGroup);
+            nameInput.value = '';
+            renderAll();
+        }
+
+        function removeGroup(id) {
+            groups = groups.filter(g => g.id !== id);
+            renderAll();
+        }
+
+        function togglePartyInGroup(groupId, partyId) {
+            const group = groups.find(g => g.id === groupId);
+            if (!group) return;
+
+            if (group.partyIds.includes(partyId)) {
+                group.partyIds = group.partyIds.filter(id => id !== partyId);
+            } else {
+                group.partyIds.push(partyId);
+            }
+            renderAll();
+        }
+
+        function handleAddCommittee(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('committee-name');
+            const seatsInput = document.getElementById('committee-seats-input');
+
+            const newCommittee = {
+                id: 'c_' + Date.now().toString(),
+                name: nameInput.value.trim(),
+                seats: parseInt(seatsInput.value, 10)
+            };
+
+            committees.push(newCommittee);
+            nameInput.value = '';
+            seatsInput.value = '';
+            renderAll();
+        }
+
+        function removeCommittee(id) {
+            committees = committees.filter(c => c.id !== id);
+            renderAll();
+        }
+
+        function updateCommitteeSeats(id, seats) {
+            const comm = committees.find(c => c.id === id);
+            if (comm) {
+                comm.seats = Math.max(1, parseInt(seats, 10) || 1);
+                renderAll();
+            }
+        }
+
+        function loadPreset(key) {
+            if (presets[key]) {
+                parties = JSON.parse(JSON.stringify(presets[key].parties));
+                groups = JSON.parse(JSON.stringify(presets[key].groups));
+                committees = JSON.parse(JSON.stringify(presets[key].committees));
+                renderAll();
+            }
+        }
+
+        function resetAll() {
+            parties = [];
+            groups = [];
+            committees = [];
+            renderAll();
+        }
+
+        function toggleGithubModal() {
+            document.getElementById('github-modal').classList.toggle('hidden');
+        }
+
+        // --- Calculations ---
+        function getTotalSeats() {
+            return parties.reduce((sum, p) => sum + p.seats, 0);
+        }
+
+        function getGroupDistributionEntities() {
+            const entities = [];
+            const claimedPartyIds = new Set();
+
+            groups.forEach(g => {
+                const groupParties = parties.filter(p => g.partyIds.includes(p.id));
+                const seats = groupParties.reduce((sum, p) => sum + p.seats, 0);
+                groupParties.forEach(p => claimedPartyIds.add(p.id));
+
+                entities.push({
+                    id: g.id,
+                    name: g.name,
+                    color: g.color,
+                    seats: seats,
+                    isGroup: true
+                });
+            });
+
+            parties.forEach(p => {
+                if (!claimedPartyIds.has(p.id)) {
+                    entities.push({
+                        id: p.id,
+                        name: p.name + ' (Fraktionslos)',
+                        color: p.color,
+                        seats: p.seats,
+                        isGroup: false
+                    });
+                }
+            });
+
+            return entities;
+        }
+
+        // --- Errechnet sowohl die Sitzanzahl als auch die Zugriffsreihenfolge ---
+        function calculateCommitteeAccessOrder(entities, committeeSize, method) {
+            if (entities.length === 0 || committeeSize <= 0) {
+                return { summary: [], accessSteps: [] };
+            }
+
+            let quotients = [];
+
+            if (method === 'saint-lague') {
+                // Divisoren: 0.5, 1.5, 2.5, 3.5 ... (bzw. 1, 3, 5, 7)
+                entities.forEach(e => {
+                    for (let step = 1; step <= committeeSize; step++) {
+                        const divisor = step - 0.5;
+                        quotients.push({
+                            entityId: e.id,
+                            entityName: e.name,
+                            color: e.color,
+                            value: e.seats / divisor,
+                            formula: `${e.seats} / ${divisor}`
+                        });
+                    }
+                });
+            } else if (method === 'dhondt') {
+                // Divisoren: 1, 2, 3, 4 ...
+                entities.forEach(e => {
+                    for (let step = 1; step <= committeeSize; step++) {
+                        quotients.push({
+                            entityId: e.id,
+                            entityName: e.name,
+                            color: e.color,
+                            value: e.seats / step,
+                            formula: `${e.seats} / ${step}`
+                        });
+                    }
+                });
+            } else if (method === 'hare') {
+                // Hare-Niemeyer Quotenbasierte Zugriffsreihenfolge
+                const total = getTotalSeats();
+                if (total === 0) return { summary: [], accessSteps: [] };
+
+                // 1. Grundsitze nach Abrundung
+                let exactSeats = entities.map(e => {
+                    const raw = (e.seats * committeeSize) / total;
+                    return {
+                        id: e.id,
+                        name: e.name,
+                        color: e.color,
+                        base: Math.floor(raw),
+                        remainder: raw - Math.floor(raw),
+                        exact: raw
+                    };
+                });
+
+                let accessSteps = [];
+                let stepNum = 1;
+
+                // Grundsitze vergeben
+                exactSeats.forEach(e => {
+                    for (let b = 0; b < e.base; b++) {
+                        accessSteps.push({
+                            step: stepNum++,
+                            entityId: e.id,
+                            entityName: e.name,
+                            color: e.color,
+                            value: e.exact,
+                            detail: `Quote (Grundplatz ${b + 1})`
+                        });
+                    }
+                });
+
+                // Restplätze nach höchsten Resten
+                let remainingSeats = committeeSize - accessSteps.length;
+                let remainderSorted = [...exactSeats].sort((a, b) => b.remainder - a.remainder);
+
+                for (let r = 0; r < remainingSeats; r++) {
+                    if (remainderSorted[r]) {
+                        const isTie = remainderSorted[r + 1] && Math.abs(remainderSorted[r].remainder - remainderSorted[r + 1].remainder) < 0.00001;
+                        accessSteps.push({
+                            step: stepNum++,
+                            entityId: remainderSorted[r].id,
+                            entityName: remainderSorted[r].name,
+                            color: remainderSorted[r].color,
+                            value: remainderSorted[r].remainder,
+                            detail: `Reststimmen: ${remainderSorted[r].remainder.toFixed(3)} ${isTie ? '🎲 (Patt / Losentscheid!)' : ''}`
+                        });
+                    }
+                }
+
+                // Summary
+                const summary = entities.map(e => {
+                    const count = accessSteps.filter(a => a.entityId === e.id).length;
+                    return { ...e, committeeSeats: count };
+                });
+
+                return { summary, accessSteps };
+            }
+
+            // Sortieren der Höchstzahlen absteigend (für D'Hondt & Saint-Laguë)
+            quotients.sort((a, b) => b.value - a.value);
+
+            // Die ersten `committeeSize` Einträge bekommen einen Sitz
+            const winningSteps = quotients.slice(0, committeeSize).map((q, index) => {
+                // Prüfen auf Patt/Losentscheid mit dem nachfolgenden Nicht-Gewinner
+                const nextQ = quotients[committeeSize];
+                const isTie = nextQ && Math.abs(q.value - nextQ.value) < 0.00001;
+
+                return {
+                    step: index + 1,
+                    entityId: q.entityId,
+                    entityName: q.entityName,
+                    color: q.color,
+                    value: q.value,
+                    detail: `Höchstzahl: ${q.value.toFixed(2)} (${q.formula}) ${isTie ? '🎲 (Patt / Losentscheid!)' : ''}`
+                };
+            });
+
+            // Summary erstellen
+            const summary = entities.map(e => {
+                const count = winningSteps.filter(w => w.entityId === e.id).length;
+                return { ...e, committeeSeats: count };
+            });
+
+            return { summary, accessSteps: winningSteps };
+        }
+
+        // --- Rendering ---
+        function renderAll() {
+            const totalSeats = getTotalSeats();
+            const majorityThreshold = Math.floor(totalSeats / 2) + 1;
+            const twoThirdsThreshold = Math.ceil((totalSeats * 2) / 3);
+
+            // 1. Badges & Header Updates
+            document.getElementById('total-seats-badge').innerText = `Gesamt: ${totalSeats} Sitze`;
+            document.getElementById('majority-threshold-text').innerText = `Einfache Mehrheit ab: ${majorityThreshold} Sitzen`;
+
+            // 2. Render Party List
+            const partyListEl = document.getElementById('parties-list');
+            partyListEl.innerHTML = parties.map(p => `
+                <div class="flex items-center justify-between gap-2 p-2 rounded-xl border border-slate-200 bg-slate-50/60 transition">
+                    <div class="flex items-center gap-2 flex-1 min-w-0">
+                        <input type="color" value="${p.color}" onchange="updatePartyColor('${p.id}', this.value)" class="w-6 h-6 rounded cursor-pointer border-0 flex-shrink-0">
+                        <input type="text" value="${p.name}" onchange="p.name=this.value; renderAll();" class="text-xs font-semibold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:outline-none w-full truncate">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="number" value="${p.seats}" min="1" onchange="updatePartySeats('${p.id}', this.value)" class="w-14 text-xs font-bold text-slate-800 px-2 py-1 rounded border border-slate-200 text-center focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        <button onclick="removeParty('${p.id}')" class="text-slate-400 hover:text-rose-600 transition p-1">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            // 3. Render Groups & Bündnisse
+            document.getElementById('group-count-badge').innerText = `${groups.length} Gruppen`;
+            const groupsContainer = document.getElementById('groups-container');
+
+            if (groups.length === 0) {
+                groupsContainer.innerHTML = `
+                    <div class="p-6 text-center border-2 border-dashed border-slate-200 rounded-xl">
+                        <i data-lucide="layers" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+                        <p class="text-xs text-slate-500 font-medium">Noch keine Gruppen oder Bündnisse angelegt.</p>
+                    </div>
+                `;
+            } else {
+                groupsContainer.innerHTML = groups.map(g => {
+                    const groupParties = parties.filter(p => g.partyIds.includes(p.id));
+                    const groupSeats = groupParties.reduce((sum, p) => sum + p.seats, 0);
+                    const groupPercent = totalSeats > 0 ? ((groupSeats / totalSeats) * 100).toFixed(1) : '0.0';
+
+                    let statusBadgeHtml = '';
+                    if (groupSeats >= twoThirdsThreshold) {
+                        statusBadgeHtml = `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">2/3 Mehrheit</span>`;
+                    } else if (groupSeats >= majorityThreshold) {
+                        statusBadgeHtml = `<span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Einfache Mehrheit</span>`;
+                    } else {
+                        statusBadgeHtml = `<span class="bg-slate-100 text-slate-600 text-[10px] font-medium px-2 py-0.5 rounded-full">Keine Mehrheit</span>`;
+                    }
+
+                    return `
+                        <div class="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-3.5 h-3.5 rounded-full" style="background-color: ${g.color}"></span>
+                                    <h3 class="font-bold text-slate-900 text-sm">${g.name}</h3>
+                                    ${statusBadgeHtml}
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <div class="text-right">
+                                        <span class="font-extrabold text-slate-900 text-sm">${groupSeats}</span>
+                                        <span class="text-xs text-slate-500"> / ${totalSeats} Sitze (${groupPercent}%)</span>
+                                    </div>
+                                    <button onclick="removeGroup('${g.id}')" class="text-slate-400 hover:text-rose-600 p-1">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Zugehörige Parteien:</label>
+                                <div class="flex flex-wrap gap-1.5">
+                                    ${parties.map(p => {
+                                        const isChecked = g.partyIds.includes(p.id);
+                                        return `
+                                            <button onclick="togglePartyInGroup('${g.id}', '${p.id}')" 
+                                                    class="px-2.5 py-1 rounded-lg text-xs font-medium border transition flex items-center gap-1.5 ${
+                                                        isChecked 
+                                                        ? 'bg-white font-semibold border-slate-400 text-slate-900 shadow-sm' 
+                                                        : 'bg-slate-100 border-transparent text-slate-500 hover:bg-slate-200'
+                                                    }">
+                                                <span class="w-2 h-2 rounded-full" style="background-color: ${p.color}"></span>
+                                                <span>${p.name} (${p.seats})</span>
+                                                ${isChecked ? '<i data-lucide="check" class="w-3 h-3 text-emerald-600"></i>' : ''}
+                                            </button>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // 4. Render SVG Hemisphere
+            renderParliamentSVG();
+
+            // 5. Render All Committees & Access Lists
+            renderCommitteesSection();
+
+            lucide.createIcons();
+        }
+
+        function renderParliamentSVG() {
+            const svg = document.getElementById('parliament-svg');
+            const totalSeats = getTotalSeats();
+            if (totalSeats === 0) {
+                svg.innerHTML = `<text x="200" y="100" text-anchor="middle" fill="#94a3b8" font-size="12">Keine Parteien vorhanden</text>`;
+                return;
+            }
+
+            let svgContent = '';
+            const centerX = 200;
+            const centerY = 170;
+            const innerRadius = 70;
+            const outerRadius = 150;
+
+            let currentAngle = Math.PI;
+
+            parties.forEach(p => {
+                if (p.seats === 0) return;
+                const partyAngle = (p.seats / totalSeats) * Math.PI;
+                const endAngle = currentAngle + partyAngle;
+
+                const x1_out = centerX + outerRadius * Math.cos(currentAngle);
+                const y1_out = centerY + Math.sin(currentAngle) * outerRadius * -1;
+                const x2_out = centerX + outerRadius * Math.cos(endAngle);
+                const y2_out = centerY + Math.sin(endAngle) * outerRadius * -1;
+
+                const x1_in = centerX + innerRadius * Math.cos(endAngle);
+                const y1_in = centerY + Math.sin(endAngle) * innerRadius * -1;
+                const x2_in = centerX + innerRadius * Math.cos(currentAngle);
+                const y2_in = centerY + Math.sin(currentAngle) * innerRadius * -1;
+
+                const largeArc = partyAngle > Math.PI / 2 ? 1 : 0;
+
+                const pathData = [
+                    `M ${x1_out} ${y1_out}`,
+                    `A ${outerRadius} ${outerRadius} 0 ${largeArc} 0 ${x2_out} ${y2_out}`,
+                    `L ${x1_in} ${y1_in}`,
+                    `A ${innerRadius} ${innerRadius} 0 ${largeArc} 1 ${x2_in} ${y2_in}`,
+                    `Z`
+                ].join(' ');
+
+                svgContent += `
+                    <path d="${pathData}" 
+                          fill="${p.color}" 
+                          stroke="#ffffff"
+                          stroke-width="1.5"
+                          class="seat-arc">
+                        <title>${p.name}: ${p.seats} Sitze (${((p.seats/totalSeats)*100).toFixed(1)}%)</title>
+                    </path>
+                `;
+
+                currentAngle = endAngle;
+            });
+
+            svgContent += `
+                <line x1="40" y1="172" x2="360" y2="172" stroke="#e2e8f0" stroke-width="2" stroke-dasharray="4 4"/>
+                <text x="200" y="155" text-anchor="middle" font-weight="bold" fill="#0f172a" font-size="20">${totalSeats}</text>
+                <text x="200" y="168" text-anchor="middle" fill="#64748b" font-size="9" uppercase tracking-widest>Gesamtsitze</text>
+            `;
+
+            svg.innerHTML = svgContent;
+        }
+
+        function renderCommitteesSection() {
+            const method = document.getElementById('calc-method').value;
+            let methodName = "Saint-Laguë / Schepers";
+            if (method === 'dhondt') methodName = "D'Hondt";
+            if (method === 'hare') methodName = "Hare-Niemeyer";
+
+            document.getElementById('calc-method-badge').innerText = methodName;
+
+            const container = document.getElementById('committees-list-container');
+            const entities = getGroupDistributionEntities();
+
+            if (committees.length === 0) {
+                container.innerHTML = `
+                    <div class="p-6 text-center border-2 border-dashed border-slate-200 rounded-xl">
+                        <i data-lucide="layout-grid" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+                        <p class="text-xs text-slate-500 font-medium">Noch keine Ausschüsse angelegt.</p>
+                        <p class="text-[11px] text-slate-400 mt-1">Füge oben einen Ausschuss mit Wunschsitzzahl hinzu.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = committees.map(comm => {
+                const { summary, accessSteps } = calculateCommitteeAccessOrder(entities, comm.seats, method);
+
+                return `
+                    <div class="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-4">
+                        <!-- Committee Header -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-indigo-600 text-white font-bold text-xs px-2.5 py-1 rounded-lg">
+                                    ${comm.seats} Sitze
+                                </span>
+                                <input type="text" value="${comm.name}" onchange="comm.name=this.value; renderAll();" class="font-bold text-slate-900 text-base bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 focus:outline-none">
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <label class="text-xs text-slate-500">Sitze:</label>
+                                <input type="number" value="${comm.seats}" min="1" max="100" onchange="updateCommitteeSeats('${comm.id}', this.value)" class="w-16 text-xs font-bold px-2 py-1 rounded border border-slate-300 text-center focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white">
+                                <button onclick="removeCommittee('${comm.id}')" class="text-slate-400 hover:text-rose-600 p-1">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Grid Layout: Links Zusammenfassung / Rechts Zugriffsreihenfolge -->
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                            <!-- Left: Seats Overview per Group (5 Cols) -->
+                            <div class="md:col-span-5 space-y-2 bg-white p-3 rounded-lg border border-slate-200">
+                                <h4 class="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                    <span>Sitzverteilung</span>
+                                    <span class="text-[10px] text-slate-400 font-normal">Gesamt</span>
+                                </h4>
+                                ${summary.map(s => `
+                                    <div class="flex items-center justify-between text-xs p-1.5 rounded hover:bg-slate-50">
+                                        <div class="flex items-center gap-2 truncate pr-2">
+                                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${s.color}"></span>
+                                            <span class="font-medium text-slate-800 truncate">${s.name}</span>
+                                        </div>
+                                        <span class="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                                            ${s.committeeSeats} Sitze
+                                        </span>
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            <!-- Right: Step-by-Step Access List (7 Cols) -->
+                            <div class="md:col-span-7 bg-white p-3 rounded-lg border border-slate-200 space-y-2">
+                                <h4 class="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                    <span>Zugriffsreihenfolge (1. bis ${comm.seats}. Zugriff)</span>
+                                    <i data-lucide="list-ordered" class="w-3.5 h-3.5 text-slate-400"></i>
+                                </h4>
+                                
+                                <div class="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+                                    ${accessSteps.map(step => `
+                                        <div class="flex items-center justify-between text-xs p-1.5 rounded-md border border-slate-100 bg-slate-50/50">
+                                            <div class="flex items-center gap-2">
+                                                <span class="w-5 h-5 rounded-full bg-slate-200 font-bold text-[10px] text-slate-700 flex items-center justify-center flex-shrink-0">
+                                                    ${step.step}
+                                                </span>
+                                                <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${step.color}"></span>
+                                                <span class="font-bold text-slate-800">${step.entityName}</span>
+                                            </div>
+                                            <span class="text-[10px] text-slate-500 font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                                                ${step.detail}
+                                            </span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    </script>
+</body>
+</html>
