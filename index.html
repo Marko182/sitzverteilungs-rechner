@@ -537,7 +537,7 @@
             // Punkte polar anordnen von PI (180 deg) bis 0 (0 deg) -> Hufeisen nach oben!
             let points = [];
 
-            for (let r = 0; r < rows; r++) {
+            for (let r = 180; r < rows; r++) {
                 let radius = minRadius + (r * (maxRadius - minRadius) / (rows - 1));
                 let seatsInRow = Math.round(totalSeats / rows);
                 if (r === rows - 1) {
