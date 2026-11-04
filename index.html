@@ -40,7 +40,7 @@
                 gap: 8px !important;
             }
             svg {
-                max-height: 120px !important;
+                max-height: 140px !important;
             }
         }
     </style>
@@ -93,17 +93,23 @@
         <!-- Ergebnis-Übersicht & Grafik -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 print-grid-3">
             
-            <!-- SVG Halbkreis -->
+            <!-- SVG Grafikkarte mit Typ-Umschalter -->
             <div class="lg:col-span-2 bg-white p-4 rounded-xl shadow-sm border border-slate-200 print-card">
-                <div class="flex justify-between items-center mb-2">
+                <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
                     <h2 class="font-bold text-sm text-slate-800">Sitzverteilung Rat</h2>
+                    
+                    <!-- Umschalter für Grafiktypen -->
+                    <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg no-print">
+                        <button onclick="setChartType('arc')" id="btn-chart-arc" class="px-2 py-0.5 text-xs font-medium rounded bg-white shadow-sm text-slate-800">Halbkreis</button>
+                        <button onclick="setChartType('bar')" id="btn-chart-bar" class="px-2 py-0.5 text-xs font-medium rounded text-slate-600 hover:text-slate-900">Balken</button>
+                        <button onclick="setChartType('donut')" id="btn-chart-donut" class="px-2 py-0.5 text-xs font-medium rounded text-slate-600 hover:text-slate-900">Donut</button>
+                    </div>
+
                     <span id="total-seats-badge" class="bg-slate-100 text-slate-700 font-semibold px-2.5 py-0.5 rounded-full text-xs">Gesamtsitze: 42</span>
                 </div>
                 
-                <div class="w-full flex justify-center items-center py-1">
-                    <svg id="parliament-svg" viewBox="0 0 500 250" class="w-full max-w-md h-auto overflow-visible">
-                        <!-- Dynamischer Parlaments-Bogen -->
-                    </svg>
+                <div class="w-full flex justify-center items-center py-1 min-h-[160px]" id="chart-render-area">
+                    <!-- Dynamische SVG Grafik -->
                 </div>
 
                 <div id="party-legend" class="flex flex-wrap gap-3 justify-center mt-2 text-[11px] font-medium">
@@ -197,13 +203,30 @@
         let parties = [];
         let groups = [];
         let committees = [];
+        let currentChartType = 'arc'; // 'arc', 'bar', 'donut'
+
+        function setChartType(type) {
+            currentChartType = type;
+            ['arc', 'bar', 'donut'].forEach(t => {
+                const btn = document.getElementById(`btn-chart-${t}`);
+                if (btn) {
+                    if (t === type) {
+                        btn.className = 'px-2 py-0.5 text-xs font-medium rounded bg-white shadow-sm text-slate-800';
+                    } else {
+                        btn.className = 'px-2 py-0.5 text-xs font-medium rounded text-slate-600 hover:text-slate-900';
+                    }
+                }
+            });
+            renderAll();
+        }
 
         function saveData() {
             const dataToSave = {
                 parties: parties,
                 groups: groups,
                 committees: committees,
-                calcMethod: document.getElementById('calc-method').value
+                calcMethod: document.getElementById('calc-method').value,
+                chartType: currentChartType
             };
             localStorage.setItem('hameln_rechner_state', JSON.stringify(dataToSave));
         }
@@ -216,9 +239,8 @@
                     parties = parsed.parties || defaultParties;
                     groups = parsed.groups || defaultGroups;
                     committees = parsed.committees || defaultCommittees;
-                    if (parsed.calcMethod) {
-                        document.getElementById('calc-method').value = parsed.calcMethod;
-                    }
+                    if (parsed.calcMethod) document.getElementById('calc-method').value = parsed.calcMethod;
+                    if (parsed.chartType) setChartType(parsed.chartType);
                     return;
                 } catch(e) {}
             }
@@ -419,7 +441,7 @@
             document.getElementById('twothird-majority-seats').innerText = `${Math.ceil((totalSeats * 2) / 3)} Sitze`;
 
             renderPartyInputs();
-            renderParliamentSVG(totalSeats);
+            renderChart(totalSeats);
             renderGroups();
             renderCommittees();
         }
@@ -444,47 +466,130 @@
             });
         }
 
-        function renderParliamentSVG(totalSeats) {
-            const svg = document.getElementById('parliament-svg');
+        // Dynamisches Generieren verschiedener Live-Grafiktypen
+        function renderChart(totalSeats) {
+            const area = document.getElementById('chart-render-area');
             const legend = document.getElementById('party-legend');
-            svg.innerHTML = ''; legend.innerHTML = '';
+            area.innerHTML = ''; 
+            legend.innerHTML = '';
             if (totalSeats === 0) return;
 
-            const centerX = 250, centerY = 220, rows = 5, minRadius = 60, maxRadius = 180;
-            let points = [];
+            if (currentChartType === 'arc') {
+                // TYPE 1: Parlaments-Halbkreis (Bogen)
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('viewBox', '0 0 500 250');
+                svg.setAttribute('class', 'w-full max-w-md h-auto overflow-visible');
 
-            for (let r = 0; r < rows; r++) {
-                let radius = minRadius + (r * (maxRadius - minRadius) / (rows - 1));
-                let seatsInRow = Math.round(totalSeats / rows);
-                if (r === rows - 1) seatsInRow = totalSeats - points.length;
+                const centerX = 250, centerY = 220, rows = 5, minRadius = 60, maxRadius = 180;
+                let points = [];
 
-                for (let s = 0; s < seatsInRow; s++) {
-                    let angle = Math.PI - (s / (seatsInRow - 1 || 1)) * Math.PI;
-                    let x = centerX + radius * Math.cos(angle);
-                    let y = centerY - radius * Math.sin(angle);
-                    points.push({ x, y });
-                }
-            }
-            points.sort((a, b) => a.x - b.x);
+                for (let r = 0; r < rows; r++) {
+                    let radius = minRadius + (r * (maxRadius - minRadius) / (rows - 1));
+                    let seatsInRow = Math.round(totalSeats / rows);
+                    if (r === rows - 1) seatsInRow = totalSeats - points.length;
 
-            let currentPointIndex = 0;
-            parties.forEach(p => {
-                for (let i = 0; i < p.seats; i++) {
-                    if (currentPointIndex < points.length) {
-                        let pt = points[currentPointIndex];
-                        let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                        circle.setAttribute('cx', pt.x); circle.setAttribute('cy', pt.y);
-                        circle.setAttribute('r', '7'); circle.setAttribute('fill', p.color);
-                        circle.setAttribute('stroke', '#ffffff'); circle.setAttribute('stroke-width', '1');
-                        svg.appendChild(circle);
-                        currentPointIndex++;
+                    for (let s = 0; s < seatsInRow; s++) {
+                        let angle = Math.PI - (s / (seatsInRow - 1 || 1)) * Math.PI;
+                        let x = centerX + radius * Math.cos(angle);
+                        let y = centerY - radius * Math.sin(angle);
+                        points.push({ x, y });
                     }
                 }
+                points.sort((a, b) => a.x - b.x);
+
+                let currentPointIndex = 0;
+                parties.forEach(p => {
+                    for (let i = 0; i < p.seats; i++) {
+                        if (currentPointIndex < points.length) {
+                            let pt = points[currentPointIndex];
+                            let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                            circle.setAttribute('cx', pt.x); circle.setAttribute('cy', pt.y);
+                            circle.setAttribute('r', '7'); circle.setAttribute('fill', p.color);
+                            circle.setAttribute('stroke', '#ffffff'); circle.setAttribute('stroke-width', '1');
+                            svg.appendChild(circle);
+                            currentPointIndex++;
+                        }
+                    }
+                });
+                area.appendChild(svg);
+
+            } else if (currentChartType === 'bar') {
+                // TYPE 2: Gestapelter Balken
+                const wrapper = document.createElement('div');
+                wrapper.className = 'w-full max-w-md my-auto space-y-3';
+
+                const barContainer = document.createElement('div');
+                barContainer.className = 'w-full h-8 bg-slate-100 rounded-lg overflow-hidden flex shadow-inner border';
+
+                parties.forEach(p => {
+                    if (p.seats > 0) {
+                        const pct = ((p.seats / totalSeats) * 100).toFixed(1);
+                        const segment = document.createElement('div');
+                        segment.style.width = `${pct}%`;
+                        segment.style.backgroundColor = p.color;
+                        segment.className = 'h-full transition-all flex items-center justify-center text-[10px] text-white font-bold truncate px-1';
+                        segment.title = `${p.name}: ${p.seats} Sitze (${pct}%)`;
+                        if (pct > 7) segment.innerText = `${p.seats}`;
+                        barContainer.appendChild(segment);
+                    }
+                });
+                wrapper.appendChild(barContainer);
+                area.appendChild(wrapper);
+
+            } else if (currentChartType === 'donut') {
+                // TYPE 3: Donut-Ring (SVG)
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('viewBox', '0 0 200 200');
+                svg.setAttribute('class', 'w-40 h-40 overflow-visible my-auto');
+
+                let cumulativePercent = 0;
+
+                parties.forEach(p => {
+                    if (p.seats > 0) {
+                        const percent = p.seats / totalSeats;
+                        const [startX, startY] = getCoordinatesForPercent(cumulativePercent);
+                        cumulativePercent += percent;
+                        const [endX, endY] = getCoordinatesForPercent(cumulativePercent);
+
+                        const largeArcFlag = percent > 0.5 ? 1 : 0;
+                        const pathData = [
+                            `M ${startX} ${startY}`,
+                            `A 1 1 0 ${largeArcFlag} 1 ${endX} ${endY}`,
+                            `L 0 0`,
+                        ].join(' ');
+
+                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        path.setAttribute('d', pathData);
+                        path.setAttribute('fill', p.color);
+                        path.setAttribute('stroke', '#ffffff');
+                        path.setAttribute('stroke-width', '0.05');
+                        svg.appendChild(path);
+                    }
+                });
+
+                // Innerer Kreis für Donut-Effekt
+                const innerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                innerCircle.setAttribute('cx', '0'); innerCircle.setAttribute('cy', '0');
+                innerCircle.setAttribute('r', '0.6'); innerCircle.setAttribute('fill', '#ffffff');
+                svg.appendChild(innerCircle);
+
+                svg.setAttribute('viewBox', '-1.1 -1.1 2.2 2.2');
+                area.appendChild(svg);
+            }
+
+            // Legende rendern
+            parties.forEach(p => {
                 const legItem = document.createElement('div');
                 legItem.className = 'flex items-center gap-1';
                 legItem.innerHTML = `<span class="w-2.5 h-2.5 rounded-full" style="background-color: ${p.color}"></span> ${p.name} (${p.seats})`;
                 legend.appendChild(legItem);
             });
+        }
+
+        function getCoordinatesForPercent(percent) {
+            const x = Math.cos(2 * Math.PI * percent - Math.PI / 2);
+            const y = Math.sin(2 * Math.PI * percent - Math.PI / 2);
+            return [x, y];
         }
 
         function renderGroups() {
