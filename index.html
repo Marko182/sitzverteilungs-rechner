@@ -98,7 +98,6 @@
                 <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
                     <h2 class="font-bold text-sm text-slate-800">Sitzverteilung Rat</h2>
                     
-                    <!-- Umschalter für Grafiktypen -->
                     <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg no-print">
                         <button onclick="setChartType('arc')" id="btn-chart-arc" class="px-2 py-0.5 text-xs font-medium rounded bg-white shadow-sm text-slate-800">Halbkreis</button>
                         <button onclick="setChartType('bar')" id="btn-chart-bar" class="px-2 py-0.5 text-xs font-medium rounded text-slate-600 hover:text-slate-900">Balken</button>
@@ -149,16 +148,24 @@
 
         <!-- Ausschuss-Ergebnisse -->
         <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 print-card">
-            <div class="flex justify-between items-center mb-3">
+            <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
                 <h2 class="font-bold text-sm text-slate-800">Ausschuss-Ergebnisse & Zugriffsreihenfolge</h2>
 
-                <div class="flex items-center gap-2 no-print">
-                    <label class="text-xs font-semibold text-slate-600">Verfahren:</label>
-                    <select id="calc-method" onchange="renderAll()" class="border rounded px-2 py-1 text-xs bg-slate-50 font-medium focus:outline-none">
-                        <option value="sainte-lague">Saint-Laguë / Schepers</option>
-                        <option value="dhondt">D'Hondt</option>
-                        <option value="hare-niemeyer">Hare-Niemeyer</option>
-                    </select>
+                <div class="flex items-center gap-4 no-print flex-wrap">
+                    <!-- Option § 71 Abs. 3 NKomVG -->
+                    <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
+                        <input type="checkbox" id="nkomvg-rule" onchange="renderAll()" class="rounded text-amber-600 focus:ring-amber-500">
+                        § 71 Abs. 3 NKomVG (1. Zugriff für stärkste Gruppe)
+                    </label>
+
+                    <div class="flex items-center gap-1">
+                        <label class="text-xs font-semibold text-slate-600">Verfahren:</label>
+                        <select id="calc-method" onchange="renderAll()" class="border rounded px-2 py-1 text-xs bg-slate-50 font-medium focus:outline-none">
+                            <option value="sainte-lague">Saint-Laguë / Schepers</option>
+                            <option value="dhondt">D'Hondt</option>
+                            <option value="hare-niemeyer">Hare-Niemeyer</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -203,18 +210,16 @@
         let parties = [];
         let groups = [];
         let committees = [];
-        let currentChartType = 'arc'; // 'arc', 'bar', 'donut'
+        let currentChartType = 'arc';
 
         function setChartType(type) {
             currentChartType = type;
             ['arc', 'bar', 'donut'].forEach(t => {
                 const btn = document.getElementById(`btn-chart-${t}`);
                 if (btn) {
-                    if (t === type) {
-                        btn.className = 'px-2 py-0.5 text-xs font-medium rounded bg-white shadow-sm text-slate-800';
-                    } else {
-                        btn.className = 'px-2 py-0.5 text-xs font-medium rounded text-slate-600 hover:text-slate-900';
-                    }
+                    btn.className = (t === type) 
+                        ? 'px-2 py-0.5 text-xs font-medium rounded bg-white shadow-sm text-slate-800'
+                        : 'px-2 py-0.5 text-xs font-medium rounded text-slate-600 hover:text-slate-900';
                 }
             });
             renderAll();
@@ -226,7 +231,8 @@
                 groups: groups,
                 committees: committees,
                 calcMethod: document.getElementById('calc-method').value,
-                chartType: currentChartType
+                chartType: currentChartType,
+                nkomvgRule: document.getElementById('nkomvg-rule').checked
             };
             localStorage.setItem('hameln_rechner_state', JSON.stringify(dataToSave));
         }
@@ -241,6 +247,7 @@
                     committees = parsed.committees || defaultCommittees;
                     if (parsed.calcMethod) document.getElementById('calc-method').value = parsed.calcMethod;
                     if (parsed.chartType) setChartType(parsed.chartType);
+                    if (parsed.nkomvgRule !== undefined) document.getElementById('nkomvg-rule').checked = parsed.nkomvgRule;
                     return;
                 } catch(e) {}
             }
@@ -370,60 +377,86 @@
             return entities;
         }
 
+        // BERECHNUNGSALGORITHMUS INKL. § 71 Abs. 3 NKomVG
         function calculateCommitteeSeats(committeeSeats, method) {
-            const entities = getEntitiesForCalculation();
+            let entities = getEntitiesForCalculation();
             const totalCouncilSeats = parties.reduce((sum, p) => sum + p.seats, 0);
 
             if (totalCouncilSeats === 0 || entities.length === 0) return { summary: [], steps: [] };
 
+            const useNKomVG = document.getElementById('nkomvg-rule').checked;
             let steps = [];
             let resultSeats = {};
             entities.forEach(e => resultSeats[e.id] = 0);
 
-            if (method === 'dhondt' || method === 'sainte-lague') {
-                let scores = [];
-                entities.forEach(entity => {
-                    for (let step = 1; step <= committeeSeats; step++) {
-                        let divisor = (method === 'dhondt') ? step : (step - 0.5);
-                        scores.push({ entityId: entity.id, entityName: entity.name, color: entity.color, value: entity.seats / divisor });
-                    }
+            // Sortierung für Vorrang der größten Fraktion/Gruppe nach NKomVG
+            entities.sort((a, b) => b.seats - a.seats);
+            const largestEntity = entities[0];
+
+            let startRank = 1;
+            let availableSeats = committeeSeats;
+
+            // WENN § 71 Abs. 3 NKomVG AKTIV: Der 1. Zugriff geht an die größte Fraktion/Gruppe
+            if (useNKomVG && largestEntity) {
+                resultSeats[largestEntity.id] = 1;
+                steps.push({
+                    rank: 1,
+                    entityName: largestEntity.name,
+                    color: largestEntity.color,
+                    value: '§ 71 Abs. 3'
                 });
-                scores.sort((a, b) => b.value - a.value);
+                startRank = 2;
+                availableSeats -= 1;
+            }
 
-                for (let i = 0; i < committeeSeats; i++) {
-                    let winner = scores[i];
-                    if (winner) {
-                        resultSeats[winner.entityId] = (resultSeats[winner.entityId] || 0) + 1;
-                        steps.push({ rank: i + 1, entityName: winner.entityName, color: winner.color, value: winner.value.toFixed(2) });
-                    }
-                }
-            } else if (method === 'hare-niemeyer') {
-                let exactQuotas = [];
-                let totalAssigned = 0;
-                entities.forEach(entity => {
-                    let exact = (entity.seats * committeeSeats) / totalCouncilSeats;
-                    let guaranteed = Math.floor(exact);
-                    resultSeats[entity.id] = guaranteed;
-                    totalAssigned += guaranteed;
-                    exactQuotas.push({ entityId: entity.id, entityName: entity.name, color: entity.color, exact, remainder: exact - guaranteed });
-                });
+            if (availableSeats > 0) {
+                if (method === 'dhondt' || method === 'sainte-lague') {
+                    let scores = [];
+                    entities.forEach(entity => {
+                        // Falls die größte bereits 1 Sitz aus NKomVG hat, beginnt ihre Teilungsreihe beim 2. Sitz
+                        let startStep = (useNKomVG && entity.id === largestEntity.id) ? 2 : 1;
+                        for (let step = startStep; step <= committeeSeats; step++) {
+                            let divisor = (method === 'dhondt') ? step : (step - 0.5);
+                            scores.push({ entityId: entity.id, entityName: entity.name, color: entity.color, value: entity.seats / divisor });
+                        }
+                    });
+                    scores.sort((a, b) => b.value - a.value);
 
-                let remainingSeats = committeeSeats - totalAssigned;
-                exactQuotas.sort((a, b) => b.remainder - a.remainder);
-                for (let i = 0; i < remainingSeats; i++) {
-                    if (exactQuotas[i]) resultSeats[exactQuotas[i].entityId] += 1;
-                }
-
-                exactQuotas.sort((a, b) => b.exact - a.exact);
-                let rank = 1;
-                exactQuotas.forEach(eq => {
-                    let totalCount = resultSeats[eq.entityId];
-                    for (let c = 0; c < totalCount; c++) {
-                        if (rank <= committeeSeats) {
-                            steps.push({ rank: rank++, entityName: eq.entityName, color: eq.color, value: eq.exact.toFixed(2) });
+                    for (let i = 0; i < availableSeats; i++) {
+                        let winner = scores[i];
+                        if (winner) {
+                            resultSeats[winner.entityId] = (resultSeats[winner.entityId] || 0) + 1;
+                            steps.push({ rank: startRank + i, entityName: winner.entityName, color: winner.color, value: winner.value.toFixed(2) });
                         }
                     }
-                });
+                } else if (method === 'hare-niemeyer') {
+                    let exactQuotas = [];
+                    let totalAssigned = 0;
+                    entities.forEach(entity => {
+                        let exact = (entity.seats * availableSeats) / totalCouncilSeats;
+                        let guaranteed = Math.floor(exact);
+                        resultSeats[entity.id] = (resultSeats[entity.id] || 0) + guaranteed;
+                        totalAssigned += guaranteed;
+                        exactQuotas.push({ entityId: entity.id, entityName: entity.name, color: entity.color, exact, remainder: exact - guaranteed });
+                    });
+
+                    let remainingSeats = availableSeats - totalAssigned;
+                    exactQuotas.sort((a, b) => b.remainder - a.remainder);
+                    for (let i = 0; i < remainingSeats; i++) {
+                        if (exactQuotas[i]) resultSeats[exactQuotas[i].entityId] += 1;
+                    }
+
+                    exactQuotas.sort((a, b) => b.exact - a.exact);
+                    let rank = startRank;
+                    exactQuotas.forEach(eq => {
+                        let totalCount = resultSeats[eq.entityId] - ((useNKomVG && eq.entityId === largestEntity.id) ? 1 : 0);
+                        for (let c = 0; c < totalCount; c++) {
+                            if (rank <= committeeSeats) {
+                                steps.push({ rank: rank++, entityName: eq.entityName, color: eq.color, value: eq.exact.toFixed(2) });
+                            }
+                        }
+                    });
+                }
             }
 
             let summary = entities.map(e => ({
@@ -466,7 +499,6 @@
             });
         }
 
-        // Dynamisches Generieren verschiedener Live-Grafiktypen
         function renderChart(totalSeats) {
             const area = document.getElementById('chart-render-area');
             const legend = document.getElementById('party-legend');
@@ -475,7 +507,6 @@
             if (totalSeats === 0) return;
 
             if (currentChartType === 'arc') {
-                // TYPE 1: Parlaments-Halbkreis (Bogen)
                 const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                 svg.setAttribute('viewBox', '0 0 500 250');
                 svg.setAttribute('class', 'w-full max-w-md h-auto overflow-visible');
@@ -514,7 +545,6 @@
                 area.appendChild(svg);
 
             } else if (currentChartType === 'bar') {
-                // TYPE 2: Gestapelter Balken
                 const wrapper = document.createElement('div');
                 wrapper.className = 'w-full max-w-md my-auto space-y-3';
 
@@ -528,7 +558,6 @@
                         segment.style.width = `${pct}%`;
                         segment.style.backgroundColor = p.color;
                         segment.className = 'h-full transition-all flex items-center justify-center text-[10px] text-white font-bold truncate px-1';
-                        segment.title = `${p.name}: ${p.seats} Sitze (${pct}%)`;
                         if (pct > 7) segment.innerText = `${p.seats}`;
                         barContainer.appendChild(segment);
                     }
@@ -537,7 +566,6 @@
                 area.appendChild(wrapper);
 
             } else if (currentChartType === 'donut') {
-                // TYPE 3: Donut-Ring (SVG)
                 const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                 svg.setAttribute('viewBox', '0 0 200 200');
                 svg.setAttribute('class', 'w-40 h-40 overflow-visible my-auto');
@@ -567,7 +595,6 @@
                     }
                 });
 
-                // Innerer Kreis für Donut-Effekt
                 const innerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 innerCircle.setAttribute('cx', '0'); innerCircle.setAttribute('cy', '0');
                 innerCircle.setAttribute('r', '0.6'); innerCircle.setAttribute('fill', '#ffffff');
@@ -577,7 +604,6 @@
                 area.appendChild(svg);
             }
 
-            // Legende rendern
             parties.forEach(p => {
                 const legItem = document.createElement('div');
                 legItem.className = 'flex items-center gap-1';
