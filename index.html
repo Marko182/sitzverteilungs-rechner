@@ -7,166 +7,171 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Spezielle Druck-Styles für sauberes PDF Layout */
+        /* Spezielle Druck-Styles für ein kompaktes 1-Seiten-Ergebnis-PDF */
         @media print {
             .no-print {
                 display: none !important;
+            }
+            @page {
+                size: A4 portrait;
+                margin: 8mm;
             }
             body {
                 background: white !important;
                 color: black !important;
                 padding: 0 !important;
+                font-size: 11px !important;
             }
             .print-card {
                 box-shadow: none !important;
-                border: 1px solid #ddd !important;
-                break-inside: avoid;
+                border: 1px solid #cbd5e1 !important;
+                break-inside: avoid !important;
+                padding: 8px !important;
+                margin-bottom: 8px !important;
+            }
+            .print-grid-2 {
+                display: grid !important;
+                grid-template-cols: repeat(2, minmax(0, 1fr)) !important;
+                gap: 8px !important;
+            }
+            .print-grid-3 {
+                display: grid !important;
+                grid-template-cols: repeat(3, minmax(0, 1fr)) !important;
+                gap: 8px !important;
+            }
+            svg {
+                max-height: 120px !important;
             }
         }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-800 p-4 md:p-8">
+<body class="bg-slate-100 min-h-screen text-slate-800 p-3 md:p-6">
 
-    <div class="max-w-7xl mx-auto space-y-6">
+    <div class="max-w-7xl mx-auto space-y-4">
         
         <!-- Header & Action-Bar -->
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200 gap-4">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200 gap-3">
             <div>
                 <div class="flex items-center gap-2">
-                    <h1 class="text-2xl font-bold text-slate-900">Rat der Stadt Hameln – Sitzverteilung & Ausschüsse</h1>
-                    <span class="bg-emerald-100 text-emerald-800 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1 no-print">
+                    <h1 class="text-xl font-bold text-slate-900">Rat der Stadt Hameln – Ergebnisse & Sitzverteilung</h1>
+                    <span class="bg-emerald-100 text-emerald-800 text-xs font-semibold px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1 no-print">
                         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                        Auto-Speichern aktiv
+                        Gespeichert
                     </span>
                 </div>
-                <p class="text-sm text-slate-500">Vorbelegt mit den Fraktionsstärken des Hamelner Stadtrates und allen wesentlichen Gremien.</p>
             </div>
             <div class="flex items-center gap-3 no-print">
-                <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium text-sm shadow-sm transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                     Drucken / Als PDF speichern
                 </button>
             </div>
         </header>
 
-        <!-- Parteien-Verwaltung & Preset-Lader -->
-        <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 no-print">
-            <h2 class="font-bold text-lg mb-4 text-slate-800">1. Parteien & Fraktionen (Stadtrat Hameln)</h2>
-            <div class="flex flex-wrap gap-2 mb-4">
-                <span class="text-sm text-slate-500 self-center mr-2">Schnell-Presets:</span>
-                <button onclick="loadPreset('hameln')" class="px-3 py-1 text-xs bg-slate-100 hover:bg-slate-200 rounded font-medium text-slate-700">Stadtrat Hameln zurücksetzen</button>
-                <button onclick="loadPreset('empty')" class="px-3 py-1 text-xs bg-slate-100 hover:bg-slate-200 rounded font-medium text-slate-700">Alle löschen</button>
+        <!-- Parteien-Verwaltung -->
+        <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 no-print">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="font-bold text-base text-slate-800">1. Parteien & Fraktionen konfigurieren</h2>
+                <div class="flex gap-2">
+                    <button onclick="loadPreset('hameln')" class="px-2.5 py-1 text-xs bg-slate-100 hover:bg-slate-200 rounded font-medium text-slate-700">Hameln Standard</button>
+                    <button onclick="loadPreset('empty')" class="px-2.5 py-1 text-xs bg-slate-100 hover:bg-slate-200 rounded font-medium text-slate-700">Alle löschen</button>
+                </div>
             </div>
             
-            <div id="parties-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
-                <!-- Parteien-Karten werden dynamisch gerendert -->
+            <div id="parties-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mb-3">
+                <!-- Parteien-Karten -->
             </div>
 
             <div class="flex gap-2">
-                <input type="text" id="new-party-name" placeholder="Neue Fraktion / Partei..." class="px-3 py-2 border rounded-lg text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="number" id="new-party-seats" placeholder="Sitze" min="1" value="2" class="px-3 py-2 border rounded-lg text-sm w-24 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="color" id="new-party-color" value="#3b82f6" class="h-9 w-12 rounded cursor-pointer border p-1">
-                <button onclick="addParty()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">+ Partei hinzufügen</button>
+                <input type="text" id="new-party-name" placeholder="Neue Partei..." class="px-3 py-1.5 border rounded-lg text-xs w-40 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="number" id="new-party-seats" placeholder="Sitze" min="1" value="2" class="px-3 py-1.5 border rounded-lg text-xs w-20 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="color" id="new-party-color" value="#3b82f6" class="h-8 w-10 rounded cursor-pointer border p-0.5">
+                <button onclick="addParty()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition">+ Hinzufügen</button>
             </div>
         </section>
 
-        <!-- Parlaments-Halbkreis & Kennzahlen -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Ergebnis-Übersicht & Grafik -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 print-grid-3">
             
             <!-- SVG Halbkreis -->
-            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200 print-card">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="font-bold text-lg text-slate-800">Sitzverteilung im Rat der Stadt Hameln</h2>
-                    <span id="total-seats-badge" class="bg-slate-100 text-slate-700 font-semibold px-3 py-1 rounded-full text-sm">Gesamtsitze: 42</span>
+            <div class="lg:col-span-2 bg-white p-4 rounded-xl shadow-sm border border-slate-200 print-card">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="font-bold text-sm text-slate-800">Sitzverteilung Rat</h2>
+                    <span id="total-seats-badge" class="bg-slate-100 text-slate-700 font-semibold px-2.5 py-0.5 rounded-full text-xs">Gesamtsitze: 42</span>
                 </div>
                 
-                <!-- SVG Parlamentskreis (Nach oben gewölbt) -->
-                <div class="w-full flex justify-center items-center py-4">
-                    <svg id="parliament-svg" viewBox="0 0 500 270" class="w-full max-w-xl h-auto overflow-visible">
-                        <!-- Dynamisch generierte Sitzpunkte -->
+                <div class="w-full flex justify-center items-center py-1">
+                    <svg id="parliament-svg" viewBox="0 0 500 250" class="w-full max-w-md h-auto overflow-visible">
+                        <!-- Dynamischer Parlaments-Bogen -->
                     </svg>
                 </div>
 
-                <div id="party-legend" class="flex flex-wrap gap-4 justify-center mt-4 text-xs font-medium">
-                    <!-- Parteienlegende -->
+                <div id="party-legend" class="flex flex-wrap gap-3 justify-center mt-2 text-[11px] font-medium">
+                    <!-- Legende -->
                 </div>
             </div>
 
-            <!-- Schnell-Übersicht Mehrheiten -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 print-card flex flex-col justify-between">
+            <!-- Mehrheits-Schwellen -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 print-card flex flex-col justify-between">
                 <div>
-                    <h2 class="font-bold text-lg mb-4 text-slate-800">Mehrheits-Schwellen</h2>
-                    <div class="space-y-4">
-                        <div class="p-3 bg-slate-50 rounded-lg border">
-                            <div class="text-xs text-slate-500 font-medium">Einfache Mehrheit (>50%)</div>
-                            <div id="simple-majority-seats" class="text-xl font-bold text-slate-800">22 Sitze</div>
+                    <h2 class="font-bold text-sm mb-3 text-slate-800">Mehrheiten</h2>
+                    <div class="space-y-2">
+                        <div class="p-2 bg-slate-50 rounded border">
+                            <div class="text-[10px] text-slate-500 font-medium">Einfache Mehrheit (>50%)</div>
+                            <div id="simple-majority-seats" class="text-base font-bold text-slate-800">22 Sitze</div>
                         </div>
-                        <div class="p-3 bg-slate-50 rounded-lg border">
-                            <div class="text-xs text-slate-500 font-medium">2/3 Mehrheit (Qualifiziert)</div>
-                            <div id="twothird-majority-seats" class="text-xl font-bold text-slate-800">28 Sitze</div>
+                        <div class="p-2 bg-slate-50 rounded border">
+                            <div class="text-[10px] text-slate-500 font-medium">2/3 Mehrheit</div>
+                            <div id="twothird-majority-seats" class="text-base font-bold text-slate-800">28 Sitze</div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
-                    <h3 class="text-xs font-semibold text-blue-900 uppercase tracking-wider mb-1">Automatische Speicherung</h3>
-                    <p class="text-xs text-blue-700 leading-relaxed">
-                        Alle Änderungen werden direkt im Browser gespeichert. Du kannst das Fenster jederzeit schließen und später weiterarbeiten.
-                    </p>
                 </div>
             </div>
         </div>
 
-        <!-- Bündnisse & Gruppenbildung -->
-        <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 print-card">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
-                <div>
-                    <h2 class="font-bold text-lg text-slate-800">2. Bündnisse & Gruppen bilden (z.B. Koalitionen / Zählgemeinschaften)</h2>
-                    <p class="text-xs text-slate-500">Füge Fraktionen zusammen, um Mehrheiten zu prüfen und Ausschusszugriffe zu bündeln.</p>
-                </div>
-                <button onclick="addGroup()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition no-print">+ Neue Gruppe anlegen</button>
+        <!-- Bündnisse -->
+        <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 print-card">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="font-bold text-sm text-slate-800">Gebildete Bündnisse & Koalitionen</h2>
+                <button onclick="addGroup()" class="bg-purple-600 hover:bg-purple-700 text-white px-2.5 py-1 rounded-lg text-xs font-medium transition no-print">+ Gruppe anlegen</button>
             </div>
 
-            <div id="groups-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Dynamische Bündnisse -->
+            <div id="groups-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 print-grid-3">
+                <!-- Bündnisse -->
             </div>
         </section>
 
-        <!-- Ausschüsse & Gremien mit Zugriffsreihenfolge -->
-        <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 print-card">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
-                <div>
-                    <h2 class="font-bold text-lg text-slate-800">3. Hamelner Ausschüsse & Zugriffsreihenfolge</h2>
-                    <p class="text-xs text-slate-500">Passe die Sitzanzahl direkt im Ausschuss an. Die Zugriffsreihenfolge berechnet sich sofort neu.</p>
-                </div>
+        <!-- Ausschuss-Ergebnisse -->
+        <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 print-card">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="font-bold text-sm text-slate-800">Ausschuss-Ergebnisse & Zugriffsreihenfolge</h2>
 
-                <div class="flex flex-wrap items-center gap-3 no-print">
-                    <label class="text-xs font-semibold text-slate-600">Berechnungsverfahren:</label>
-                    <select id="calc-method" onchange="renderAll()" class="border rounded-lg px-3 py-1.5 text-sm bg-slate-50 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        <option value="sainte-lague">Saint-Laguë / Schepers (Standard)</option>
-                        <option value="dhondt">D'Hondt (Höchstzahl)</option>
-                        <option value="hare-niemeyer">Hare-Niemeyer (Quotenverfahren)</option>
+                <div class="flex items-center gap-2 no-print">
+                    <label class="text-xs font-semibold text-slate-600">Verfahren:</label>
+                    <select id="calc-method" onchange="renderAll()" class="border rounded px-2 py-1 text-xs bg-slate-50 font-medium focus:outline-none">
+                        <option value="sainte-lague">Saint-Laguë / Schepers</option>
+                        <option value="dhondt">D'Hondt</option>
+                        <option value="hare-niemeyer">Hare-Niemeyer</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Ausschuss anlegen Formular -->
-            <div class="flex flex-wrap gap-2 mb-6 p-3 bg-slate-50 rounded-lg border border-slate-200 no-print">
-                <input type="text" id="new-committee-name" placeholder="Ausschuss-Name..." class="px-3 py-1.5 border rounded-lg text-sm flex-1 min-w-[200px] focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="number" id="new-committee-seats" placeholder="Sitze" min="1" value="9" class="px-3 py-1.5 border rounded-lg text-sm w-24 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <button onclick="addCommittee()" class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition">+ Ausschuss anlegen</button>
+            <!-- Ausschuss hinzufügen Formular -->
+            <div class="flex gap-2 mb-4 p-2 bg-slate-50 rounded border border-slate-200 no-print">
+                <input type="text" id="new-committee-name" placeholder="Ausschuss-Name..." class="px-2.5 py-1 border rounded text-xs flex-1 focus:outline-none">
+                <input type="number" id="new-committee-seats" placeholder="Sitze" min="1" value="9" class="px-2.5 py-1 border rounded text-xs w-20 focus:outline-none">
+                <button onclick="addCommittee()" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1 rounded text-xs font-medium transition">+ Anlegen</button>
             </div>
 
-            <div id="committees-container" class="space-y-6">
+            <div id="committees-container" class="grid grid-cols-1 md:grid-cols-2 gap-3 print-grid-2">
                 <!-- Dynamische Ausschusstabellen -->
             </div>
         </section>
 
     </div>
 
-    <!-- JavaScript Logik mit LocalStorage -->
+    <!-- JavaScript Logik -->
     <script>
-        // Standard-Datenbestand für den Rat der Stadt Hameln (42 Sitze)
         const defaultParties = [
             { id: 'p1', name: 'CDU', seats: 12, color: '#1e293b' },
             { id: 'p2', name: 'SPD', seats: 11, color: '#e11d48' },
@@ -181,11 +186,11 @@
 
         const defaultCommittees = [
             { id: 'c1', name: 'Verwaltungsausschuss (VA)', seats: 9 },
-            { id: 'c2', name: 'Ausschuss für Finanzen, Personal und Wirtschaft', seats: 9 },
+            { id: 'c2', name: 'Ausschuss für Finanzen & Wirtschaft', seats: 9 },
             { id: 'c3', name: 'Ausschuss für Stadtentwicklung', seats: 9 },
-            { id: 'c4', name: 'Ausschuss für Familie, Kindertagesstätten, Schulen und Sport', seats: 9 },
-            { id: 'c5', name: 'Ausschuss für Umwelt, Nachhaltigkeit und Klimaschutz', seats: 9 },
-            { id: 'c6', name: 'Ausschuss für Recht, Sicherheit und Ordnung', seats: 9 },
+            { id: 'c4', name: 'Ausschuss für Familie & Sport', seats: 9 },
+            { id: 'c5', name: 'Ausschuss für Umwelt & Klimaschutz', seats: 9 },
+            { id: 'c6', name: 'Ausschuss für Recht & Ordnung', seats: 9 },
             { id: 'c7', name: 'Ausschuss für Kultur', seats: 9 }
         ];
 
@@ -193,7 +198,6 @@
         let groups = [];
         let committees = [];
 
-        // SPEICHERN & LADEN LOGIK (LocalStorage)
         function saveData() {
             const dataToSave = {
                 parties: parties,
@@ -216,11 +220,8 @@
                         document.getElementById('calc-method').value = parsed.calcMethod;
                     }
                     return;
-                } catch(e) {
-                    console.error("Fehler beim Laden gespeicherter Daten", e);
-                }
+                } catch(e) {}
             }
-            // Fallback auf Standardwerte
             parties = [...defaultParties];
             groups = [...defaultGroups];
             committees = [...defaultCommittees];
@@ -239,7 +240,6 @@
             renderAll();
         }
 
-        // Parteien verwalten
         function addParty() {
             const nameInput = document.getElementById('new-party-name');
             const seatsInput = document.getElementById('new-party-seats');
@@ -251,23 +251,14 @@
 
             if (!name || isNaN(seats) || seats <= 0) return;
 
-            parties.push({
-                id: 'p_' + Date.now(),
-                name: name,
-                seats: seats,
-                color: color
-            });
-
+            parties.push({ id: 'p_' + Date.now(), name, seats, color });
             nameInput.value = '';
-            seatsInput.value = '2';
             renderAll();
         }
 
         function removeParty(id) {
             parties = parties.filter(p => p.id !== id);
-            groups.forEach(g => {
-                g.partyIds = g.partyIds.filter(pId => pId !== id);
-            });
+            groups.forEach(g => { g.partyIds = g.partyIds.filter(pId => pId !== id); });
             renderAll();
         }
 
@@ -280,15 +271,8 @@
             }
         }
 
-        // Gruppen verwalten
         function addGroup() {
-            const id = 'g_' + Date.now();
-            groups.push({
-                id: id,
-                name: 'Neue Gruppe / Zählgemeinschaft',
-                partyIds: [],
-                color: '#6366f1'
-            });
+            groups.push({ id: 'g_' + Date.now(), name: 'Neues Bündnis', partyIds: [], color: '#6366f1' });
             renderAll();
         }
 
@@ -300,7 +284,6 @@
         function togglePartyInGroup(groupId, partyId) {
             const group = groups.find(g => g.id === groupId);
             if (!group) return;
-
             if (group.partyIds.includes(partyId)) {
                 group.partyIds = group.partyIds.filter(id => id !== partyId);
             } else {
@@ -311,30 +294,18 @@
 
         function updateGroupName(groupId, name) {
             const group = groups.find(g => g.id === groupId);
-            if (group) {
-                group.name = name;
-                renderAll();
-            }
+            if (group) { group.name = name; renderAll(); }
         }
 
-        // Ausschüsse verwalten
         function addCommittee() {
             const nameInput = document.getElementById('new-committee-name');
             const seatsInput = document.getElementById('new-committee-seats');
-
             const name = nameInput.value.trim();
             const seats = parseInt(seatsInput.value);
-
             if (!name || isNaN(seats) || seats <= 0) return;
 
-            committees.push({
-                id: 'c_' + Date.now(),
-                name: name,
-                seats: seats
-            });
-
+            committees.push({ id: 'c_' + Date.now(), name, seats });
             nameInput.value = '';
-            seatsInput.value = '9';
             renderAll();
         }
 
@@ -352,11 +323,9 @@
             }
         }
 
-        // BERECHNUNGSALGORITHMEN FÜR AUSSCHÜSSE
         function getEntitiesForCalculation() {
             let groupedPartyIds = new Set();
             groups.forEach(g => g.partyIds.forEach(id => groupedPartyIds.add(id)));
-
             let entities = [];
 
             groups.forEach(g => {
@@ -364,36 +333,18 @@
                 let memberNames = [];
                 g.partyIds.forEach(pId => {
                     let p = parties.find(x => x.id === pId);
-                    if (p) {
-                        totalSeats += p.seats;
-                        memberNames.push(p.name);
-                    }
+                    if (p) { totalSeats += p.seats; memberNames.push(p.name); }
                 });
                 if (totalSeats > 0) {
-                    entities.push({
-                        id: g.id,
-                        name: g.name,
-                        details: memberNames.join(' + '),
-                        seats: totalSeats,
-                        color: g.color || '#6366f1',
-                        isGroup: true
-                    });
+                    entities.push({ id: g.id, name: g.name, details: memberNames.join('+'), seats: totalSeats, color: g.color || '#6366f1' });
                 }
             });
 
             parties.forEach(p => {
                 if (!groupedPartyIds.has(p.id) && p.seats > 0) {
-                    entities.push({
-                        id: p.id,
-                        name: p.name,
-                        details: 'Einzelpartei / Fraktion',
-                        seats: p.seats,
-                        color: p.color,
-                        isGroup: false
-                    });
+                    entities.push({ id: p.id, name: p.name, details: 'Einzeln', seats: p.seats, color: p.color });
                 }
             });
-
             return entities;
         }
 
@@ -401,9 +352,7 @@
             const entities = getEntitiesForCalculation();
             const totalCouncilSeats = parties.reduce((sum, p) => sum + p.seats, 0);
 
-            if (totalCouncilSeats === 0 || entities.length === 0) {
-                return { result: [], steps: [] };
-            }
+            if (totalCouncilSeats === 0 || entities.length === 0) return { summary: [], steps: [] };
 
             let steps = [];
             let resultSeats = {};
@@ -411,65 +360,36 @@
 
             if (method === 'dhondt' || method === 'sainte-lague') {
                 let scores = [];
-
                 entities.forEach(entity => {
                     for (let step = 1; step <= committeeSeats; step++) {
                         let divisor = (method === 'dhondt') ? step : (step - 0.5);
-                        let value = entity.seats / divisor;
-                        scores.push({
-                            entityId: entity.id,
-                            entityName: entity.name,
-                            color: entity.color,
-                            value: value,
-                            divisor: divisor
-                        });
+                        scores.push({ entityId: entity.id, entityName: entity.name, color: entity.color, value: entity.seats / divisor });
                     }
                 });
-
                 scores.sort((a, b) => b.value - a.value);
 
                 for (let i = 0; i < committeeSeats; i++) {
                     let winner = scores[i];
                     if (winner) {
                         resultSeats[winner.entityId] = (resultSeats[winner.entityId] || 0) + 1;
-                        steps.push({
-                            rank: i + 1,
-                            entityName: winner.entityName,
-                            color: winner.color,
-                            value: winner.value.toFixed(2),
-                            note: `Divisor: ${winner.divisor}`
-                        });
+                        steps.push({ rank: i + 1, entityName: winner.entityName, color: winner.color, value: winner.value.toFixed(2) });
                     }
                 }
             } else if (method === 'hare-niemeyer') {
                 let exactQuotas = [];
                 let totalAssigned = 0;
-
                 entities.forEach(entity => {
                     let exact = (entity.seats * committeeSeats) / totalCouncilSeats;
                     let guaranteed = Math.floor(exact);
-                    let remainder = exact - guaranteed;
-
                     resultSeats[entity.id] = guaranteed;
                     totalAssigned += guaranteed;
-
-                    exactQuotas.push({
-                        entityId: entity.id,
-                        entityName: entity.name,
-                        color: entity.color,
-                        exact: exact,
-                        guaranteed: guaranteed,
-                        remainder: remainder
-                    });
+                    exactQuotas.push({ entityId: entity.id, entityName: entity.name, color: entity.color, exact, remainder: exact - guaranteed });
                 });
 
                 let remainingSeats = committeeSeats - totalAssigned;
                 exactQuotas.sort((a, b) => b.remainder - a.remainder);
-
                 for (let i = 0; i < remainingSeats; i++) {
-                    if (exactQuotas[i]) {
-                        resultSeats[exactQuotas[i].entityId] += 1;
-                    }
+                    if (exactQuotas[i]) resultSeats[exactQuotas[i].entityId] += 1;
                 }
 
                 exactQuotas.sort((a, b) => b.exact - a.exact);
@@ -478,34 +398,21 @@
                     let totalCount = resultSeats[eq.entityId];
                     for (let c = 0; c < totalCount; c++) {
                         if (rank <= committeeSeats) {
-                            steps.push({
-                                rank: rank++,
-                                entityName: eq.entityName,
-                                color: eq.color,
-                                value: eq.exact.toFixed(2),
-                                note: `Quote`
-                            });
+                            steps.push({ rank: rank++, entityName: eq.entityName, color: eq.color, value: eq.exact.toFixed(2) });
                         }
                     }
                 });
             }
 
             let summary = entities.map(e => ({
-                id: e.id,
-                name: e.name,
-                details: e.details,
-                color: e.color,
-                councilSeats: e.seats,
-                assignedSeats: resultSeats[e.id] || 0
+                name: e.name, details: e.details, color: e.color, assignedSeats: resultSeats[e.id] || 0
             }));
 
             return { summary, steps };
         }
 
-        // RENDER LOGIK
         function renderAll() {
-            saveData(); // Bei jeder Änderung im Browser speichern
-
+            saveData();
             const totalSeats = parties.reduce((sum, p) => sum + p.seats, 0);
             document.getElementById('total-seats-badge').innerText = `Gesamtsitze: ${totalSeats}`;
             document.getElementById('simple-majority-seats').innerText = `${Math.floor(totalSeats / 2) + 1} Sitze`;
@@ -520,20 +427,17 @@
         function renderPartyInputs() {
             const container = document.getElementById('parties-container');
             container.innerHTML = '';
-
             parties.forEach(p => {
                 const card = document.createElement('div');
-                card.className = 'p-3 bg-slate-50 border rounded-lg flex items-center justify-between gap-2';
+                card.className = 'p-1.5 bg-slate-50 border rounded flex items-center justify-between gap-1 text-xs';
                 card.innerHTML = `
-                    <div class="flex items-center gap-2 flex-1 min-w-0">
-                        <span class="w-4 h-4 rounded-full flex-shrink-0" style="background-color: ${p.color}"></span>
-                        <span class="font-medium text-sm truncate" title="${p.name}">${p.name}</span>
+                    <div class="flex items-center gap-1.5 truncate">
+                        <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${p.color}"></span>
+                        <span class="font-medium truncate">${p.name}</span>
                     </div>
                     <div class="flex items-center gap-1">
-                        <input type="number" min="0" value="${p.seats}" onchange="updatePartySeats('${p.id}', this.value)" class="w-16 px-2 py-1 border rounded text-sm text-right focus:ring-1 focus:ring-blue-500">
-                        <button onclick="removeParty('${p.id}')" class="text-slate-400 hover:text-red-600 p-1 rounded">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
+                        <input type="number" min="0" value="${p.seats}" onchange="updatePartySeats('${p.id}', this.value)" class="w-12 px-1 py-0.5 border rounded text-right">
+                        <button onclick="removeParty('${p.id}')" class="text-slate-400 hover:text-red-600">×</button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -543,34 +447,24 @@
         function renderParliamentSVG(totalSeats) {
             const svg = document.getElementById('parliament-svg');
             const legend = document.getElementById('party-legend');
-            svg.innerHTML = '';
-            legend.innerHTML = '';
-
+            svg.innerHTML = ''; legend.innerHTML = '';
             if (totalSeats === 0) return;
 
-            const centerX = 250;
-            const centerY = 230;
-            const rows = 5;
-            const minRadius = 70;
-            const maxRadius = 200;
-
+            const centerX = 250, centerY = 220, rows = 5, minRadius = 60, maxRadius = 180;
             let points = [];
 
             for (let r = 0; r < rows; r++) {
                 let radius = minRadius + (r * (maxRadius - minRadius) / (rows - 1));
                 let seatsInRow = Math.round(totalSeats / rows);
-                if (r === rows - 1) {
-                    seatsInRow = totalSeats - points.length;
-                }
+                if (r === rows - 1) seatsInRow = totalSeats - points.length;
 
                 for (let s = 0; s < seatsInRow; s++) {
                     let angle = Math.PI - (s / (seatsInRow - 1 || 1)) * Math.PI;
                     let x = centerX + radius * Math.cos(angle);
                     let y = centerY - radius * Math.sin(angle);
-                    points.push({ x, y, angle });
+                    points.push({ x, y });
                 }
             }
-
             points.sort((a, b) => a.x - b.x);
 
             let currentPointIndex = 0;
@@ -579,25 +473,16 @@
                     if (currentPointIndex < points.length) {
                         let pt = points[currentPointIndex];
                         let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                        circle.setAttribute('cx', pt.x);
-                        circle.setAttribute('cy', pt.y);
-                        circle.setAttribute('r', '7.5');
-                        circle.setAttribute('fill', p.color);
-                        circle.setAttribute('stroke', '#ffffff');
-                        circle.setAttribute('stroke-width', '1.5');
-
-                        let title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-                        title.textContent = `${p.name}`;
-                        circle.appendChild(title);
-
+                        circle.setAttribute('cx', pt.x); circle.setAttribute('cy', pt.y);
+                        circle.setAttribute('r', '7'); circle.setAttribute('fill', p.color);
+                        circle.setAttribute('stroke', '#ffffff'); circle.setAttribute('stroke-width', '1');
                         svg.appendChild(circle);
                         currentPointIndex++;
                     }
                 }
-
                 const legItem = document.createElement('div');
-                legItem.className = 'flex items-center gap-1.5';
-                legItem.innerHTML = `<span class="w-3 h-3 rounded-full" style="background-color: ${p.color}"></span> ${p.name} (${p.seats})`;
+                legItem.className = 'flex items-center gap-1';
+                legItem.innerHTML = `<span class="w-2.5 h-2.5 rounded-full" style="background-color: ${p.color}"></span> ${p.name} (${p.seats})`;
                 legend.appendChild(legItem);
             });
         }
@@ -605,7 +490,6 @@
         function renderGroups() {
             const container = document.getElementById('groups-container');
             container.innerHTML = '';
-
             const totalCouncilSeats = parties.reduce((sum, p) => sum + p.seats, 0);
 
             groups.forEach(g => {
@@ -614,43 +498,26 @@
                     let p = parties.find(x => x.id === pId);
                     if (p) groupSeatCount += p.seats;
                 });
-
-                let percentage = totalCouncilSeats > 0 ? ((groupSeatCount / totalCouncilSeats) * 100).toFixed(1) : 0;
                 let isMajority = groupSeatCount > Math.floor(totalCouncilSeats / 2);
 
                 const card = document.createElement('div');
-                card.className = 'p-4 border rounded-xl bg-slate-50 relative flex flex-col justify-between';
+                card.className = 'p-2.5 border rounded-lg bg-slate-50 flex flex-col justify-between text-xs';
                 card.innerHTML = `
                     <div>
-                        <div class="flex justify-between items-start gap-2 mb-3">
-                            <input type="text" value="${g.name}" onchange="updateGroupName('${g.id}', this.value)" class="font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 text-sm focus:outline-none w-full">
-                            <button onclick="removeGroup('${g.id}')" class="text-slate-400 hover:text-red-600 no-print">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                            </button>
+                        <div class="flex justify-between items-center mb-1">
+                            <input type="text" value="${g.name}" onchange="updateGroupName('${g.id}', this.value)" class="font-bold text-slate-800 bg-transparent border-b border-transparent focus:border-blue-500 w-full">
+                            <button onclick="removeGroup('${g.id}')" class="text-slate-400 hover:text-red-600 no-print">×</button>
                         </div>
-
-                        <div class="flex flex-wrap gap-1.5 mb-4 no-print">
+                        <div class="flex flex-wrap gap-1 mb-2 no-print">
                             ${parties.map(p => {
                                 const selected = g.partyIds.includes(p.id);
-                                return `
-                                    <button onclick="togglePartyInGroup('${g.id}', '${p.id}')" class="px-2 py-1 rounded text-xs font-medium border transition flex items-center gap-1 ${selected ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'}">
-                                        <span class="w-2 h-2 rounded-full" style="background-color: ${p.color}"></span>
-                                        ${p.name}
-                                    </button>
-                                `;
+                                return `<button onclick="togglePartyInGroup('${g.id}', '${p.id}')" class="px-1.5 py-0.5 rounded text-[10px] border ${selected ? 'bg-slate-800 text-white' : 'bg-white text-slate-600'}">${p.name}</button>`;
                             }).join('')}
                         </div>
                     </div>
-
-                    <div class="pt-3 border-t flex items-center justify-between">
-                        <div>
-                            <span class="text-xs text-slate-500">Stärke im Rat:</span>
-                            <div class="font-bold text-base text-slate-900">${groupSeatCount} Sitze <span class="text-xs text-slate-500 font-normal">(${percentage}%)</span></div>
-                        </div>
-                        ${isMajority ? 
-                            `<span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full border border-emerald-200">Mehrheit!</span>` : 
-                            `<span class="bg-slate-200 text-slate-600 text-xs font-medium px-2 py-1 rounded-full">Keine Mehrheit</span>`
-                        }
+                    <div class="flex justify-between items-center pt-1 border-t">
+                        <span class="font-bold">${groupSeatCount} Sitze</span>
+                        ${isMajority ? `<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">Mehrheit</span>` : ''}
                     </div>
                 `;
                 container.appendChild(card);
@@ -660,60 +527,39 @@
         function renderCommittees() {
             const container = document.getElementById('committees-container');
             container.innerHTML = '';
-
             const method = document.getElementById('calc-method').value;
 
             committees.forEach(c => {
                 const { summary, steps } = calculateCommitteeSeats(c.seats, method);
-
                 const card = document.createElement('div');
-                card.className = 'border rounded-xl p-5 bg-slate-50/50 space-y-4';
+                card.className = 'border rounded-lg p-2.5 bg-slate-50 text-xs';
                 card.innerHTML = `
-                    <div class="flex justify-between items-center border-b pb-3 gap-3 flex-wrap">
-                        <div class="flex items-center gap-3">
-                            <h3 class="font-bold text-slate-900 text-base">${c.name}</h3>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="flex items-center gap-1.5 bg-white border px-2.5 py-1 rounded-lg">
-                                <label class="text-xs text-slate-500 font-medium">Sitze:</label>
-                                <input type="number" min="1" max="50" value="${c.seats}" onchange="updateCommitteeSeats('${c.id}', this.value)" class="w-14 text-center font-bold text-slate-800 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-transparent">
-                            </div>
-                            <button onclick="removeCommittee('${c.id}')" class="text-slate-400 hover:text-red-600 text-xs font-medium no-print flex items-center gap-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                Löschen
-                            </button>
+                    <div class="flex justify-between items-center border-b pb-1 mb-2">
+                        <span class="font-bold text-slate-800">${c.name}</span>
+                        <div class="flex items-center gap-1">
+                            <span class="text-[10px] text-slate-500">Sitze:</span>
+                            <input type="number" min="1" value="${c.seats}" onchange="updateCommitteeSeats('${c.id}', this.value)" class="w-10 text-center font-bold bg-white border rounded">
+                            <button onclick="removeCommittee('${c.id}')" class="text-slate-400 hover:text-red-600 no-print ml-1">×</button>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Sitzverteilung im Gremium</h4>
-                            <div class="space-y-1.5">
-                                ${summary.map(item => `
-                                    <div class="flex justify-between items-center p-2 bg-white rounded border text-sm">
-                                        <div class="flex items-center gap-2">
-                                            <span class="w-3 h-3 rounded-full" style="background-color: ${item.color}"></span>
-                                            <span class="font-semibold text-slate-800">${item.name}</span>
-                                            <span class="text-xs text-slate-400">(${item.details})</span>
-                                        </div>
-                                        <span class="font-bold text-slate-900 bg-slate-100 px-2.5 py-0.5 rounded">${item.assignedSeats} Sitze</span>
-                                    </div>
-                                `).join('')}
-                            </div>
+                            <div class="font-semibold text-[10px] text-slate-500 mb-1">Verteilung:</div>
+                            ${summary.map(item => `
+                                <div class="flex justify-between py-0.5 border-b border-slate-100">
+                                    <span class="truncate">${item.name}</span>
+                                    <span class="font-bold ml-1">${item.assignedSeats}</span>
+                                </div>
+                            `).join('')}
                         </div>
-
                         <div>
-                            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Zugriffsreihenfolge (Zugriff 1 bis ${c.seats})</h4>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                            <div class="font-semibold text-[10px] text-slate-500 mb-1">Zugriffe (1-${c.seats}):</div>
+                            <div class="flex flex-wrap gap-1">
                                 ${steps.map(s => `
-                                    <div class="flex items-center justify-between p-1.5 bg-white rounded border text-xs">
-                                        <div class="flex items-center gap-2">
-                                            <span class="font-bold text-slate-400 w-4">${s.rank}.</span>
-                                            <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${s.color}"></span>
-                                            <span class="font-medium text-slate-700 truncate max-w-[110px]">${s.entityName}</span>
-                                        </div>
-                                        <span class="text-slate-400 font-mono text-[10px]">${s.value}</span>
-                                    </div>
+                                    <span class="bg-white border px-1 rounded text-[10px]" style="border-left: 3px solid ${s.color}">
+                                        ${s.rank}.${s.entityName}
+                                    </span>
                                 `).join('')}
                             </div>
                         </div>
