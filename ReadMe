@@ -28,28 +28,8 @@ Hare-Niemeyer (Quoten verfahren)
 
 🖨️ Druck- & PDF-Export: Optimiertes CSS für den sauberen Druck oder Export als PDF (Buttons und Formulare werden beim Drucken automatisch ausgeblendet).
 
-🛠️ Ausführung & Installation
-
-Da der Rechner vollständig aus einer einzelnen, eigenständigen HTML-Datei (inkl. Tailwind CSS & Vanilla JavaScript) besteht, ist keine Installation oder Server-Infrastruktur erforderlich.
-
-Repository klonen oder die index.html herunterladen:
-
-git clone https://github.com/dein-username/dein-repo-name.git
 
 
-Die Datei index.html einfach per Doppelklick in einem beliebigen Browser (Chrome, Firefox, Edge, Safari) öffnen.
-
-🌐 Veröffentlichung über GitHub Pages
-
-Um das Tool kostenlos im Internet zugänglich zu machen:
-
-Lade die Datei index.html in das Hauptverzeichnis (Root) deines GitHub-Repositories hoch.
-
-Gehe in deinem Repository auf Settings → Pages.
-
-Wähle unter Build and deployment > Branch den main-Branch aus und klicke auf Save.
-
-Nach ca. 1 Minute ist deine Seite unter https://dein-username.github.io/dein-repo-name/ erreichbar.
 
 📄 Lizenz
 
