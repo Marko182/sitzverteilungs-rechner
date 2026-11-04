@@ -33,7 +33,7 @@
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200 gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-slate-900">Rat der Stadt Hameln – Sitzverteilung & Ausschüsse</h1>
-                <p class="text-sm text-slate-500">Vorbelegt mit den realen Fraktionsstärken des Hamelner Stadtrates und den wichtigsten Gremien.</p>
+                <p class="text-sm text-slate-500">Vorbelegt mit den Fraktionsstärken des Hamelner Stadtrates und allen wesentlichen Gremien.</p>
             </div>
             <div class="flex items-center gap-3 no-print">
                 <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition flex items-center gap-2">
@@ -105,7 +105,7 @@
                 <div class="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
                     <h3 class="text-xs font-semibold text-blue-900 uppercase tracking-wider mb-1">Hinweis</h3>
                     <p class="text-xs text-blue-700 leading-relaxed">
-                        Die Ausschüsse in Hameln werden direkt auf Basis der Gruppen- und Parteistärken berechnet.
+                        Die Sitzanzahl jedes Ausschusses lässt sich direkt im jeweiligen Ausschuss-Kopf anpassen.
                     </p>
                 </div>
             </div>
@@ -131,7 +131,7 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
                 <div>
                     <h2 class="font-bold text-lg text-slate-800">3. Hamelner Ausschüsse & Zugriffsreihenfolge</h2>
-                    <p class="text-xs text-slate-500">Vorausgewählt mit den typischen Ratsausschüssen der Stadt Hameln.</p>
+                    <p class="text-xs text-slate-500">Passe die Sitzanzahl direkt im Ausschuss an. Die Zugriffsreihenfolge berechnet sich sofort neu.</p>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-3 no-print">
@@ -171,9 +171,7 @@
             { id: 'p7', name: 'Frischer Wind', seats: 1, color: '#f97316' }
         ];
 
-        let groups = [
-            // Beispielhaft leer oder individuell belegbar
-        ];
+        let groups = [];
 
         // Hamelner Fachausschüsse und Gremien
         let committees = [
@@ -284,7 +282,7 @@
             }
         }
 
-        // Ausschüsse verwalten
+        // Ausschüsse verwalten & Sitzanzahl direkt ändern
         function addCommittee() {
             const nameInput = document.getElementById('new-committee-name');
             const seatsInput = document.getElementById('new-committee-seats');
@@ -308,6 +306,15 @@
         function removeCommittee(id) {
             committees = committees.filter(c => c.id !== id);
             renderAll();
+        }
+
+        function updateCommitteeSeats(id, value) {
+            const seats = parseInt(value);
+            const committee = committees.find(c => c.id === id);
+            if (committee && !isNaN(seats) && seats > 0) {
+                committee.seats = seats;
+                renderAll();
+            }
         }
 
         // BERECHNUNGSALGORITHMEN FÜR AUSSCHÜSSE
@@ -625,15 +632,20 @@
                 const card = document.createElement('div');
                 card.className = 'border rounded-xl p-5 bg-slate-50/50 space-y-4';
                 card.innerHTML = `
-                    <div class="flex justify-between items-center border-b pb-3">
+                    <div class="flex justify-between items-center border-b pb-3 gap-3 flex-wrap">
                         <div class="flex items-center gap-3">
                             <h3 class="font-bold text-slate-900 text-base">${c.name}</h3>
-                            <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${c.seats} Sitze</span>
                         </div>
-                        <button onclick="removeCommittee('${c.id}')" class="text-slate-400 hover:text-red-600 text-xs font-medium no-print flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            Ausschuss löschen
-                        </button>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-1.5 bg-white border px-2.5 py-1 rounded-lg">
+                                <label class="text-xs text-slate-500 font-medium">Sitze:</label>
+                                <input type="number" min="1" max="50" value="${c.seats}" onchange="updateCommitteeSeats('${c.id}', this.value)" class="w-14 text-center font-bold text-slate-800 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-transparent">
+                            </div>
+                            <button onclick="removeCommittee('${c.id}')" class="text-slate-400 hover:text-red-600 text-xs font-medium no-print flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                Löschen
+                            </button>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
