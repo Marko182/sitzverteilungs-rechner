@@ -1,0 +1,56 @@
+🏛️ Sitzverteilungs-, Koalitions- & Ausschussrechner (Stadt Hameln)
+
+Ein interaktiver, browserbasierter Rechner zur Simulation von Mehrheiten, Fraktionsgemeinschaften und der automatischen Sitzberechnung in kommunalen Ausschüssen und Gremien.
+
+Das Tool ist standardmäßig mit den Daten des Rates der Stadt Hameln (42 Sitze) und den entsprechenden Fachausschüssen vorbelegt, lässt sich jedoch flexibel an jeden beliebig zusammengesetzten Rat, Kreistag oder Parlament anpassen.
+
+✨ Hauptfunktionen
+
+📊 Parlaments-Halbkreis: Visualisierung der Sitzverteilung als klassischer, nach oben gewölbter Bogen.
+
+🤝 Dynamische Bündnis- & Gruppenbildung: Erstellung von Koalitionen und Zählgemeinschaften per Klick mit automatischer Mehrheitsprüfung (Einfache Mehrheit & 2/3-Mehrheit).
+
+🧮 Exakte Ausschussberechnung: Dynamische Zuweisung der Ausschusssitze für jede gebildete Gruppe oder Einzelfraktion.
+
+🔢 3 Wahlverfahren unterstützt:
+
+Saint-Laguë / Schepers (Divisorverfahren mit Standardrundung – Standard in Kommunen)
+
+D'Hondt (Höchstzahlverfahren)
+
+Hare-Niemeyer (Quoten verfahren)
+
+📋 Schritt-für-Schritt Zugriffsreihenfolge: Transparente Aufschlüsselung, welche Fraktion/Gruppe den 1., 2., 3. ... Zugriff auf einen Ausschusssitz erhält.
+
+⚡ Live-Anpassung: Die Sitzanzahl von Ausschüssen kann direkt vor Ort geändert werden – alle Werte berechnen sich sofort neu.
+
+💾 Auto-Save: Speichert den aktuellen Arbeitsstand automatisch im lokalen Speicher des Browsers (localStorage).
+
+🖨️ Druck- & PDF-Export: Optimiertes CSS für den sauberen Druck oder Export als PDF (Buttons und Formulare werden beim Drucken automatisch ausgeblendet).
+
+🛠️ Ausführung & Installation
+
+Da der Rechner vollständig aus einer einzelnen, eigenständigen HTML-Datei (inkl. Tailwind CSS & Vanilla JavaScript) besteht, ist keine Installation oder Server-Infrastruktur erforderlich.
+
+Repository klonen oder die index.html herunterladen:
+
+git clone https://github.com/dein-username/dein-repo-name.git
+
+
+Die Datei index.html einfach per Doppelklick in einem beliebigen Browser (Chrome, Firefox, Edge, Safari) öffnen.
+
+🌐 Veröffentlichung über GitHub Pages
+
+Um das Tool kostenlos im Internet zugänglich zu machen:
+
+Lade die Datei index.html in das Hauptverzeichnis (Root) deines GitHub-Repositories hoch.
+
+Gehe in deinem Repository auf Settings → Pages.
+
+Wähle unter Build and deployment > Branch den main-Branch aus und klicke auf Save.
+
+Nach ca. 1 Minute ist deine Seite unter https://dein-username.github.io/dein-repo-name/ erreichbar.
+
+📄 Lizenz
+
+Dieses Projekt steht unter der MIT Lizenz – frei zur Nutzung, Anpassung und Weitergabe.
