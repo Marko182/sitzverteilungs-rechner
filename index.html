@@ -155,7 +155,7 @@
                     <!-- Option § 71 Abs. 3 NKomVG -->
                     <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
                         <input type="checkbox" id="nkomvg-rule" onchange="renderAll()" class="rounded text-amber-600 focus:ring-amber-500">
-                        § 71 Abs. 3 NKomVG (1. Zugriff für stärkste Gruppe)
+                        § 71 Abs. 3 NKomVG (1. Sitz vorab an stärkste Fraktion)
                     </label>
 
                     <div class="flex items-center gap-1">
@@ -377,7 +377,7 @@
             return entities;
         }
 
-        // BERECHNUNGSALGORITHMUS INKL. § 71 Abs. 3 NKomVG
+        // BERECHNUNGSALGORITMUSS FÜR AUSSCHÜSSE (ERST VORAB-SITZ, DANN REIHENFOLGE)
         function calculateCommitteeSeats(committeeSeats, method) {
             let entities = getEntitiesForCalculation();
             const totalCouncilSeats = parties.reduce((sum, p) => sum + p.seats, 0);
@@ -389,40 +389,39 @@
             let resultSeats = {};
             entities.forEach(e => resultSeats[e.id] = 0);
 
-            // Sortierung für Vorrang der größten Fraktion/Gruppe nach NKomVG
+            // Sortierung nach Ratsmandaten, um die stärkste Kraft zu ermitteln
             entities.sort((a, b) => b.seats - a.seats);
             const largestEntity = entities[0];
 
             let startRank = 1;
-            let availableSeats = committeeSeats;
+            let seatsToDistribute = committeeSeats;
 
-            // WENN § 71 Abs. 3 NKomVG AKTIV: Der 1. Zugriff geht an die größte Fraktion/Gruppe
+            // SCHRITT 1: Vorab-Vergabe an die stärkste Fraktion/Gruppe (§ 71 Abs. 3 NKomVG)
             if (useNKomVG && largestEntity) {
                 resultSeats[largestEntity.id] = 1;
                 steps.push({
                     rank: 1,
                     entityName: largestEntity.name,
                     color: largestEntity.color,
-                    value: '§ 71 Abs. 3'
+                    value: 'Vorab (§ 71 Abs. 3)'
                 });
                 startRank = 2;
-                availableSeats -= 1;
+                seatsToDistribute -= 1;
             }
 
-            if (availableSeats > 0) {
+            // SCHRITT 2: Vergabe aller weiteren Sitze nach dem gewählten Berechnungsverfahren
+            if (seatsToDistribute > 0) {
                 if (method === 'dhondt' || method === 'sainte-lague') {
                     let scores = [];
                     entities.forEach(entity => {
-                        // Falls die größte bereits 1 Sitz aus NKomVG hat, beginnt ihre Teilungsreihe beim 2. Sitz
-                        let startStep = (useNKomVG && entity.id === largestEntity.id) ? 2 : 1;
-                        for (let step = startStep; step <= committeeSeats; step++) {
+                        for (let step = 1; step <= committeeSeats; step++) {
                             let divisor = (method === 'dhondt') ? step : (step - 0.5);
                             scores.push({ entityId: entity.id, entityName: entity.name, color: entity.color, value: entity.seats / divisor });
                         }
                     });
                     scores.sort((a, b) => b.value - a.value);
 
-                    for (let i = 0; i < availableSeats; i++) {
+                    for (let i = 0; i < seatsToDistribute; i++) {
                         let winner = scores[i];
                         if (winner) {
                             resultSeats[winner.entityId] = (resultSeats[winner.entityId] || 0) + 1;
@@ -433,14 +432,14 @@
                     let exactQuotas = [];
                     let totalAssigned = 0;
                     entities.forEach(entity => {
-                        let exact = (entity.seats * availableSeats) / totalCouncilSeats;
+                        let exact = (entity.seats * seatsToDistribute) / totalCouncilSeats;
                         let guaranteed = Math.floor(exact);
                         resultSeats[entity.id] = (resultSeats[entity.id] || 0) + guaranteed;
                         totalAssigned += guaranteed;
                         exactQuotas.push({ entityId: entity.id, entityName: entity.name, color: entity.color, exact, remainder: exact - guaranteed });
                     });
 
-                    let remainingSeats = availableSeats - totalAssigned;
+                    let remainingSeats = seatsToDistribute - totalAssigned;
                     exactQuotas.sort((a, b) => b.remainder - a.remainder);
                     for (let i = 0; i < remainingSeats; i++) {
                         if (exactQuotas[i]) resultSeats[exactQuotas[i].entityId] += 1;
